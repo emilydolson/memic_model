@@ -1,25 +1,33 @@
 #ifndef _RESOURCE_GRADIENT_H
 #define _RESOURCE_GRADIENT_H
 
-#include "base/array.h"
+#include "base/vector.h"
 
-template <int X_LEN, int Y_LEN = 0, int Z_LEN = 0>
 class ResourceGradient {
-    using grid_t = emp::array<emp::array<double, X_LEN>, Y_LEN>;
+    using grid_t = emp::vector<emp::vector<double>>; // It might be possible to make these arrays
     grid_t grid;
     double diffusion_coefficient;
+    int x_len;
+    int y_len;
+    int z_len;
 
-    ResourceGradient() {
-        for (int y = 0; y < Y_LEN; y++) {
-            for (int x = 0; x < X_LEN; x++) {
+    public:
+    ResourceGradient(int x_len_in, int y_len_in=1, int z_len_in=1) :
+        x_len(x_len_in), y_len(y_len_in), z_len(z_len_in) {
+        for (int y = 0; y < y_len; y++) {
+            for (int x = 0; x < x_len; x++) {
                 grid[y][x] = 0;
             }
         }
     }
 
-    ResourceGradient(grid_t g) {
-        for (int y = 0; y < Y_LEN; y++) {
-            for (int x = 0; x < X_LEN; x++) {
+    ResourceGradient(const grid_t & g) {
+        x_len = g[0].size();
+        y_len = g.size();
+        // TODO z_len
+
+        for (int y = 0; y < y_len; y++) {
+            for (int x = 0; x < x_len; x++) {
                 grid[y][x] = g[y][x];
             }
         }        
@@ -27,6 +35,10 @@ class ResourceGradient {
 
     void SetVal(int x, int y, double val) {
         grid[y][x] = val;
+    }
+
+    void DecVal(int x, int y, double val) {
+        grid[y][x] -= val;
     }
 
     double GetVal(int x, int y) {

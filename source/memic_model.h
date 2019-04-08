@@ -13,13 +13,14 @@ EMP_BUILD_CONFIG( MemicConfig,
   VALUE(ASYMMETRIC_DIVISION_PROB, double, 0, "Probability of a change in stemness"),
   VALUE(MITOSIS_PROB, double, 0, "Probability of mitosis"),
   VALUE(OXYGEN_THRESHOLD, double, 0, "How much oxygen do cells need to survive?"),
+  VALUE(OXYGEN_CONSUMPTION, double, 0, "Amount of oxygen a cell consumes per time point"),
   VALUE(HYPOXIA_DEATH_PROB, double, 0, "Probability of dieing, given hypoxic conditions"),
   VALUE(AGE_LIMIT, int, 0, "Age over which non-stem cells die"),
-  VALUE(WORLD_X, int, 100, "Width of world (in number of cells)"),
-  VALUE(WORLD_Y, int, 100, "Height of world (in number of cells)"),
+  CONST(WORLD_X, int, 100, "Width of world (in number of cells)"),
+  CONST(WORLD_Y, int, 100, "Height of world (in number of cells)"),
 );
 
-enum class CELL_STATE {TUMOR=0, DEAD=2, HEALTHY=3};
+enum class CELL_STATE {TUMOR=0, HEALTHY=1};
 
 struct Cell {
     double stemness;
@@ -36,12 +37,15 @@ class HCAWorld : public emp::World<Cell> {
   double ASYMMETRIC_DIVISION_PROB;
   double MITOSIS_PROB;
   double OXYGEN_THRESHOLD;
+  double OXYGEN_CONSUMPTION;
   double HYPOXIA_DEATH_PROB;
   int AGE_LIMIT;
   int WORLD_X;
   int WORLD_Y;
 
   public:
+
+  emp::Ptr<ResourceGradient> oxygen;
 
   HCAWorld(emp::Random & r) : emp::World<Cell>(r) {;}
 
@@ -50,6 +54,7 @@ class HCAWorld : public emp::World<Cell> {
     ASYMMETRIC_DIVISION_PROB = config.ASYMMETRIC_DIVISION_PROB();
     MITOSIS_PROB = config.MITOSIS_PROB();
     OXYGEN_THRESHOLD = config.OXYGEN_THRESHOLD();
+    OXYGEN_CONSUMPTION = config.OXYGEN_CONSUMPTION();
     HYPOXIA_DEATH_PROB = config.HYPOXIA_DEATH_PROB();
     AGE_LIMIT = config.AGE_LIMIT();
     WORLD_X = config.WORLD_X();
@@ -64,6 +69,7 @@ class HCAWorld : public emp::World<Cell> {
 
   void Setup(MemicConfig & config) {
     InitConfigs(config);
+    oxygen.New(WORLD_X, WORLD_Y);
 
     // Setup systematics here
 
@@ -81,7 +87,7 @@ class HCAWorld : public emp::World<Cell> {
     for (int x = std::max(0, x_coord-1); x < std::min(WORLD_X, x_coord + 2); x++) {
       for (int y = std::max(0, y_coord-1); y < std::min(WORLD_Y, y_coord + 2); y++) {
         int this_cell = y*WORLD_X + x;
-        if (!IsOccupied(this_cell) || pop[this_cell]->state == CELL_STATE::DEAD ||
+        if (!IsOccupied(this_cell) ||
             (pop[this_cell]->state == CELL_STATE::HEALTHY && !healthy)) {
           open_spots.push_back(this_cell);
         }
@@ -99,9 +105,21 @@ class HCAWorld : public emp::World<Cell> {
   void RunStep() {
     for (int cell_id = 0; cell_id < WORLD_X * WORLD_Y; cell_id++) {
 
+      if (!IsOccupied(cell_id)) {
+        // Don't need to do anything for dead/empty cells
+        continue;
+      }
+
       // Query oxygen to test for hypoxia
-      // If hypoxic, possibly die
+      if (oxygen->GetVal(cell_id%WORLD_X, cell_id/WORLD_Y) < OXYGEN_THRESHOLD) {
+        // If hypoxic, die with specified probability
+        if (random_ptr->P(HYPOXIA_DEATH_PROB)) {
+          continue; // Continuing without reproducing means death on next update
+        }
+      }
+
       // Else, consume oxygen
+      oxygen->DecVal(OXYGEN_CONSUMPTION);
 
       // Check for space for division
       int potential_offspring_cell = CanDivide(cell_id);
@@ -121,7 +139,6 @@ class HCAWorld : public emp::World<Cell> {
         offspring = emp::NewPtr<Cell>(*pop[cell_id]);
         offspring_ready_sig.Trigger(*offspring, cell_id);
         AddOrgAt(offspring, cell_id, cell_id);
-
       }
 
     }
