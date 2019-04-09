@@ -14,6 +14,7 @@ EMP_BUILD_CONFIG( MemicConfig,
   VALUE(WORLD_Y, int, 100, "Height of world (in number of cells)"),
 
   GROUP(CELL, "Cell settings"),
+  VALUE(NEUTRAL_MUTATION_RATE, double, .01, "Probability of a neutral mutation (only relevant for phylogenetic signature)"),
   VALUE(ASYMMETRIC_DIVISION_PROB, double, 0, "Probability of a change in stemness"),
   VALUE(MITOSIS_PROB, double, 0, "Probability of mitosis"),
   VALUE(HYPOXIA_DEATH_PROB, double, 0, "Probability of dieing, given hypoxic conditions"),
@@ -35,6 +36,7 @@ struct Cell {
     double stemness;
     CELL_STATE state;
     int age = 0;
+    int clade = -1;
 
     Cell(CELL_STATE in_state, double in_stemness = 0) : 
       stemness(in_stemness), state(in_state) {;}
@@ -43,6 +45,7 @@ struct Cell {
 class HCAWorld : public emp::World<Cell> {
   private:
   int TIME_STEPS;
+  double NEUTRAL_MUTATION_RATE;
   double ASYMMETRIC_DIVISION_PROB;
   double OXYGEN_DIFFUSION_COEFFICIENT;
   double MITOSIS_PROB;
@@ -57,6 +60,8 @@ class HCAWorld : public emp::World<Cell> {
   double BASAL_OXYGEN_CONSUMPTION_TUMOR;
   double KM;
 
+  int next_clade = 0;
+
   public:
 
   emp::Ptr<ResourceGradient> oxygen;
@@ -65,6 +70,7 @@ class HCAWorld : public emp::World<Cell> {
 
   void InitConfigs(MemicConfig & config) {
     TIME_STEPS = config.TIME_STEPS();
+    NEUTRAL_MUTATION_RATE = config.NEUTRAL_MUTATION_RATE();
     ASYMMETRIC_DIVISION_PROB = config.ASYMMETRIC_DIVISION_PROB();
     MITOSIS_PROB = config.MITOSIS_PROB();
     OXYGEN_DIFFUSION_COEFFICIENT = config.OXYGEN_DIFFUSION_COEFFICIENT();
@@ -98,7 +104,20 @@ class HCAWorld : public emp::World<Cell> {
       }
     });
 
-    // Setup systematics here
+    // For now, mutations are just a way for there to be
+    // discernable phylogenetic signal.
+    SetMutFun([this](Cell & c, emp::Random & rnd){
+      if (c.state == CELL_STATE::TUMOR) {
+        if (rnd.P(NEUTRAL_MUTATION_RATE)) {
+          c.clade = next_clade;
+          next_clade++;
+          return 1;
+        }
+      }
+      return 0;
+    });
+
+    SetAutoMutate();
 
     SetPopStruct_Grid(WORLD_X, WORLD_Y, true);
     InitPop();
