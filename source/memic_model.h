@@ -104,20 +104,9 @@ class HCAWorld : public emp::World<Cell> {
       }
     });
 
-    // For now, mutations are just a way for there to be
-    // discernable phylogenetic signal.
-    SetMutFun([this](Cell & c, emp::Random & rnd){
-      if (c.state == CELL_STATE::TUMOR) {
-        if (rnd.P(NEUTRAL_MUTATION_RATE)) {
-          c.clade = next_clade;
-          next_clade++;
-          return 1;
-        }
-      }
-      return 0;
-    });
-
-    SetAutoMutate();
+    emp::Ptr<emp::Systematics<Cell, int> > sys;
+    sys.New([](const Cell & c){return c.clade;});
+    AddSystematics(sys);
 
     SetPopStruct_Grid(WORLD_X, WORLD_Y, true);
     InitPop();
@@ -182,6 +171,20 @@ class HCAWorld : public emp::World<Cell> {
     return open_spots[random_ptr->GetUInt(0, open_spots.size())];
   }
 
+  int Mutate(Cell & c){
+    c.age = 0;
+    
+    if (c.state == CELL_STATE::TUMOR) {
+      if (random_ptr->P(NEUTRAL_MUTATION_RATE)) {
+        c.clade = next_clade;
+        next_clade++;
+        return 1;
+      }
+    }
+    return 0;
+  }
+
+
   void RunStep() {
 
     std::cout << update << std::endl;
@@ -217,14 +220,24 @@ class HCAWorld : public emp::World<Cell> {
         // Handle daughter cell in previously empty spot
         before_repro_sig.Trigger(cell_id);
         emp::Ptr<Cell> offspring = emp::NewPtr<Cell>(*pop[cell_id]);
+        Mutate(*offspring);
         offspring_ready_sig.Trigger(*offspring, cell_id);
-        AddOrgAt(offspring, potential_offspring_cell, cell_id);
+        AddOrgAt(offspring, emp::WorldPosition(potential_offspring_cell, 1), cell_id);
 
         // Handle daughter cell in current location
         before_repro_sig.Trigger(cell_id);
         offspring = emp::NewPtr<Cell>(*pop[cell_id]);
+        Mutate(*offspring);
         offspring_ready_sig.Trigger(*offspring, cell_id);
-        AddOrgAt(offspring, cell_id, cell_id);
+        AddOrgAt(offspring, emp::WorldPosition(cell_id,1), cell_id);
+      } else {
+        // Quiescence - stick the cell back into the population in
+        // the same spot but don't change anything else
+        
+        emp::Ptr<Cell> cell = emp::NewPtr<Cell>(*pop[cell_id]);
+        cell->age++;
+        AddOrgAt(cell, emp::WorldPosition(cell_id,1), cell_id);
+
       }
 
     }
