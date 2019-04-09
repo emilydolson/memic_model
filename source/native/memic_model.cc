@@ -10,7 +10,7 @@ int main(int argc, char* argv[])
 {
   MemicConfig config;
   auto args = emp::cl::ArgManager(argc, argv);
-  if (args.ProcessConfigOptions(config, std::cout, "EcologyConfig.cfg", "Ecology-macros.h") == false) exit(0);
+  if (args.ProcessConfigOptions(config, std::cout, "MemicConfig.cfg", "Memic-macros.h") == false) exit(0);
   if (args.TestUnknown() == false) exit(0);  // If there are leftover args, throw an error.
 
   // Write to screen how the experiment is configured
@@ -23,6 +23,7 @@ int main(int argc, char* argv[])
   emp::Random rnd(config.SEED());
 
   HCAWorld world(rnd);
+  world.Setup(config);
 
   world.Run();
 }
