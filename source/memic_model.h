@@ -12,6 +12,7 @@ EMP_BUILD_CONFIG( MemicConfig,
   VALUE(TIME_STEPS, int, 1000, "Number of time steps to run for"),
   VALUE(WORLD_X, int, 100, "Width of world (in number of cells)"),
   VALUE(WORLD_Y, int, 100, "Height of world (in number of cells)"),
+  VALUE(INIT_POP_SIZE, int, 100, "Number of cells to seed population with"),
 
   GROUP(CELL, "Cell settings"),
   VALUE(NEUTRAL_MUTATION_RATE, double, .01, "Probability of a neutral mutation (only relevant for phylogenetic signature)"),
@@ -25,6 +26,7 @@ EMP_BUILD_CONFIG( MemicConfig,
   VALUE(OXYGEN_CONSUMPTION_DIVISION_TUMOR, double, .00075*5, "Amount of oxygen a cell consumes on division"),
   
   GROUP(OXYGEN, "Oxygen settings"),
+  VALUE(INITIAL_OXYGEN_LEVEL, double, .5, "Initial oxygen level (will be placed in all cells)"),
   VALUE(OXYGEN_DIFFUSION_COEFFICIENT, double, .1, "Oxygen diffusion coefficient"),
   VALUE(DIFFUSION_STEPS_PER_TIME_STEP, int, 10, "Rate at which diffusion is calculated relative to rest of model"),
   VALUE(OXYGEN_THRESHOLD, double, .1, "How much oxygen do cells need to survive?"),
@@ -57,9 +59,11 @@ class HCAWorld : public emp::World<Cell> {
   int AGE_LIMIT;
   int WORLD_X;
   int WORLD_Y;
+  int INIT_POP_SIZE;
   int DIFFUSION_STEPS_PER_TIME_STEP;
   double BASAL_OXYGEN_CONSUMPTION_HEALTHY;
   double BASAL_OXYGEN_CONSUMPTION_TUMOR;
+  double INITIAL_OXYGEN_LEVEL;
   double KM;
 
   int next_clade = 0;
@@ -84,10 +88,12 @@ class HCAWorld : public emp::World<Cell> {
     AGE_LIMIT = config.AGE_LIMIT();
     WORLD_X = config.WORLD_X();
     WORLD_Y = config.WORLD_Y();
+    INITIAL_OXYGEN_LEVEL = config.INITIAL_OXYGEN_LEVEL();
     DIFFUSION_STEPS_PER_TIME_STEP = config.DIFFUSION_STEPS_PER_TIME_STEP();
     BASAL_OXYGEN_CONSUMPTION_HEALTHY = config.BASAL_OXYGEN_CONSUMPTION_HEALTHY();
     BASAL_OXYGEN_CONSUMPTION_TUMOR = config.BASAL_OXYGEN_CONSUMPTION_TUMOR();
     KM = config.KM();
+    INIT_POP_SIZE = config.INIT_POP_SIZE();
   }
 
   void InitPop() {
@@ -95,13 +101,29 @@ class HCAWorld : public emp::World<Cell> {
     //   InjectAt(Cell(CELL_STATE::HEALTHY), cell_id);
     // }
     pop.resize(WORLD_X*WORLD_Y);
-    InjectAt(Cell(CELL_STATE::HEALTHY), WORLD_X/2 + WORLD_X*WORLD_Y/2);
+    for (int cell_id = 0; cell_id < INIT_POP_SIZE; cell_id++) {
+      int spot = random_ptr->GetUInt(WORLD_Y*WORLD_X);
+      InjectAt(Cell(CELL_STATE::TUMOR), spot);
+    }
+  }
+
+  void InitOxygen() {
+    for (int x = 0; x < WORLD_X; x++) {
+      for (int y = 0; y < WORLD_Y; y++) {
+        oxygen->SetVal(x, y, INITIAL_OXYGEN_LEVEL);
+      }
+    }
   }
 
   void UpdateOxygen() {
       BasalOxygenConsumption();
       oxygen->Diffuse();
       oxygen->Update();
+
+      // Oxygen inflow along edge
+      for (int x = 0; x < WORLD_X; x++) {
+        oxygen->SetVal(x, 0, 1);
+      }
   }
 
   void Setup(MemicConfig & config, bool web = false) {
@@ -122,6 +144,7 @@ class HCAWorld : public emp::World<Cell> {
     AddSystematics(sys);
 
     SetPopStruct_Grid(WORLD_X, WORLD_Y, true);
+    InitOxygen();
     InitPop();
   }
 

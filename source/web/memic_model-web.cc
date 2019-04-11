@@ -45,14 +45,17 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
     doc << GetToggleButton("but_toggle");
 
     oxygen_display.On("click", [this](int x, int y){OxygenClick(x, y);});;
+    RedrawOxygen();
+    RedrawCells();
   }
 
   void DoFrame() {
     // std::cout << frame_count << " " << GetStepTime() << std::endl;
     UpdateOxygen();
-    RedrawOxygen();
+
     if (frame_count % DIFFUSION_STEPS_PER_TIME_STEP == 0) {
       RunStep();
+      RedrawOxygen();
       RedrawCells();
     }
 
