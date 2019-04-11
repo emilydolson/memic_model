@@ -48,15 +48,19 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
   }
 
   void DoFrame() {
+    // std::cout << frame_count << " " << GetStepTime() << std::endl;
     UpdateOxygen();
+    RedrawOxygen();
     if (frame_count % DIFFUSION_STEPS_PER_TIME_STEP == 0) {
       RunStep();
+      RedrawCells();
     }
-    Redraw();
+
   }
 
-  void Redraw() {
-    oxygen_display.SetSize(WORLD_X * display_cell_size, WORLD_Y * display_cell_size);
+  void RedrawOxygen() {
+    // oxygen_display.SetSize(WORLD_X * display_cell_size, WORLD_Y * display_cell_size);
+    oxygen_display.Freeze();
     oxygen_display.Clear("black");
 
     for (int x = 0; x < WORLD_X; x++) {
@@ -71,32 +75,34 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
         oxygen_display.Rect(x*display_cell_size, y*display_cell_size, display_cell_size, display_cell_size, color, color);
       }
     }
+    oxygen_display.Activate();
+  }
 
-    cell_display.SetSize(WORLD_X * display_cell_size, WORLD_Y * display_cell_size);
+  void RedrawCells(){
+    // cell_display.SetSize(WORLD_X * display_cell_size, WORLD_Y * display_cell_size);
+    cell_display.Freeze();
     cell_display.Clear("black");
 
     for (int x = 0; x < WORLD_X; x++) {
       for (int y = 0; y < WORLD_Y; y++) {
         int cell_id = x + y * WORLD_X;
-        if (!IsOccupied(cell_id)) {
-          cell_display.Rect(x*display_cell_size, y*display_cell_size, display_cell_size, display_cell_size, "black", "black");
-          continue;
-        }
-        switch(GetOrg(cell_id).state) {
-          case CELL_STATE::HEALTHY:
-            cell_display.Rect(x*display_cell_size, y*display_cell_size, display_cell_size, display_cell_size, "green","green");
-            break;
-          case CELL_STATE::TUMOR:
-            cell_display.Rect(x*display_cell_size, y*display_cell_size, display_cell_size, display_cell_size, "blue", "blue");
-            break;
-          default:
-            std::cout << "INVALID CELL STATE" << std::endl;
-            break;
-        }
-        
+        if (IsOccupied(cell_id)) {
+          switch(GetOrg(cell_id).state) {
+            case CELL_STATE::HEALTHY:
+              cell_display.Rect(x*display_cell_size, y*display_cell_size, display_cell_size, display_cell_size, "green","green");
+              break;
+            case CELL_STATE::TUMOR:
+              cell_display.Rect(x*display_cell_size, y*display_cell_size, display_cell_size, display_cell_size, "blue", "blue");
+              break;
+            default:
+              std::cout << "INVALID CELL STATE" << std::endl;
+              break;
+          }
+        }        
       }
     }
 
+    cell_display.Activate();
 
   }
 
