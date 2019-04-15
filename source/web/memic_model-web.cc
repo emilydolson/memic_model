@@ -21,6 +21,7 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
   UI::Div display_area;
   UI::Canvas oxygen_display;
   UI::Canvas cell_display;
+  // UI::Canvas clade_display;
   const double display_cell_size = 5;
 
   public:
@@ -90,17 +91,22 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
       for (int y = 0; y < WORLD_Y; y++) {
         int cell_id = x + y * WORLD_X;
         if (IsOccupied(cell_id)) {
-          switch(GetOrg(cell_id).state) {
-            case CELL_STATE::HEALTHY:
-              cell_display.Rect(x*display_cell_size, y*display_cell_size, display_cell_size, display_cell_size, "green","green");
-              break;
-            case CELL_STATE::TUMOR:
-              cell_display.Rect(x*display_cell_size, y*display_cell_size, display_cell_size, display_cell_size, "blue", "blue");
-              break;
-            default:
-              std::cout << "INVALID CELL STATE" << std::endl;
-              break;
-          }
+          double clade_hue = pop[cell_id]->clade;
+          // std::cout << "Coloring: " << clade_hue << " " <<clade_hue/next_clade << std::endl;
+          clade_hue *= 260.0/next_clade;
+          std::string color = emp::ColorHSL(clade_hue,50,50);
+          cell_display.Rect(x*display_cell_size, y*display_cell_size, display_cell_size, display_cell_size, color, color);
+          // switch(GetOrg(cell_id).state) {
+          //   case CELL_STATE::HEALTHY:
+          //     cell_display.Rect(x*display_cell_size, y*display_cell_size, display_cell_size, display_cell_size, "green","green");
+          //     break;
+          //   case CELL_STATE::TUMOR:
+          //     cell_display.Rect(x*display_cell_size, y*display_cell_size, display_cell_size, display_cell_size, "blue", "blue");
+          //     break;
+          //   default:
+          //     std::cout << "INVALID CELL STATE" << std::endl;
+          //     break;
+          // }
         }        
       }
     }

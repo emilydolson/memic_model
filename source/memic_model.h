@@ -15,7 +15,7 @@ EMP_BUILD_CONFIG( MemicConfig,
   VALUE(INIT_POP_SIZE, int, 100, "Number of cells to seed population with"),
 
   GROUP(CELL, "Cell settings"),
-  VALUE(NEUTRAL_MUTATION_RATE, double, .01, "Probability of a neutral mutation (only relevant for phylogenetic signature)"),
+  VALUE(NEUTRAL_MUTATION_RATE, double, .05, "Probability of a neutral mutation (only relevant for phylogenetic signature)"),
   VALUE(ASYMMETRIC_DIVISION_PROB, double, 0, "Probability of a change in stemness"),
   VALUE(MITOSIS_PROB, double, 0, "Probability of mitosis"),
   VALUE(HYPOXIA_DEATH_PROB, double, .25, "Probability of dieing, given hypoxic conditions"),
@@ -39,7 +39,7 @@ struct Cell {
     double stemness;
     CELL_STATE state;
     int age = 0;
-    int clade = -1;
+    int clade = 0;
 
     Cell(CELL_STATE in_state, double in_stemness = 0) : 
       stemness(in_stemness), state(in_state) {;}
@@ -207,16 +207,15 @@ class HCAWorld : public emp::World<Cell> {
     return open_spots[random_ptr->GetUInt(0, open_spots.size())];
   }
 
-  int Mutate(Cell & c){
-    c.age = 0;
+  int Mutate(emp::Ptr<Cell> c){
+    c->age = 0;
     
-    if (c.state == CELL_STATE::TUMOR) {
-      if (random_ptr->P(NEUTRAL_MUTATION_RATE)) {
-        c.clade = next_clade;
-        next_clade++;
-        return 1;
-      }
+    if (random_ptr->P(NEUTRAL_MUTATION_RATE)) {
+      c->clade = next_clade;
+      next_clade++;
+      return 1;
     }
+
     return 0;
   }
 
@@ -224,7 +223,7 @@ class HCAWorld : public emp::World<Cell> {
   void Quiesce(int cell_id) {
     // Quiescence - stick the cell back into the population in
     // the same spot but don't change anything else
-
+    // std::cout << "Quieseing" << std::endl;
     emp::Ptr<Cell> cell = emp::NewPtr<Cell>(*pop[cell_id]);
     cell->age++;
     AddOrgAt(cell, emp::WorldPosition(cell_id,1), cell_id);
@@ -278,16 +277,17 @@ class HCAWorld : public emp::World<Cell> {
         // Handle daughter cell in previously empty spot
         before_repro_sig.Trigger(cell_id);
         emp::Ptr<Cell> offspring = emp::NewPtr<Cell>(*pop[cell_id]);
-        Mutate(*offspring);
+        Mutate(offspring);
         offspring_ready_sig.Trigger(*offspring, cell_id);
         AddOrgAt(offspring, emp::WorldPosition(potential_offspring_cell, 1), cell_id);
 
         // Handle daughter cell in current location
         before_repro_sig.Trigger(cell_id);
         offspring = emp::NewPtr<Cell>(*pop[cell_id]);
-        Mutate(*offspring);
+        Mutate(offspring);
         offspring_ready_sig.Trigger(*offspring, cell_id);
         AddOrgAt(offspring, emp::WorldPosition(cell_id,1), cell_id);
+        // std::cout << "Mutated: " << offspring->clade << std::endl;
       } else {        
         Quiesce(cell_id);
       }
