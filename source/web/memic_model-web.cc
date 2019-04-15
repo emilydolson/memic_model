@@ -17,15 +17,16 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
   // HCAWorld world;
 
   // UI::Animate anim;
-  UI::Document doc;
-  UI::Div display_area;
+  UI::Document oxygen_area;
+  UI::Document cell_area;
+  UI::Document controls;
   UI::Canvas oxygen_display;
   UI::Canvas cell_display;
   // UI::Canvas clade_display;
   const double display_cell_size = 5;
 
   public:
-  HCAWebInterface() : doc("emp_base"), display_area("display_area"), oxygen_display(400, 400, "oxygen_display"), cell_display(400, 400, "cell_display")
+  HCAWebInterface() : oxygen_area("oxygen_area"), cell_area("cell_area"), controls("control_area"), oxygen_display(400, 400, "oxygen_display"), cell_display(400, 400, "cell_display")
     // : anim([this](){DoFrame();}, oxygen_display, cell_display) 
   {
     SetupInterface();   
@@ -40,10 +41,10 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
     cell_display.SetSize(WORLD_X * display_cell_size, WORLD_Y * display_cell_size);
     cell_display.Clear("black");
 
-    display_area << oxygen_display << " ";
-    display_area << cell_display;
-    doc << display_area;
-    doc << GetToggleButton("but_toggle");
+    oxygen_area << "<h1 class='text-center'>Oxygen</h1>" << oxygen_display;
+    cell_area << "<h1 class='text-center'>Phylogenetic Depth</h1>" << cell_display;
+
+    controls << GetToggleButton("but_toggle");
 
     oxygen_display.On("click", [this](int x, int y){OxygenClick(x, y);});;
     RedrawOxygen();
