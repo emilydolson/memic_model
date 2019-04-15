@@ -91,11 +91,18 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
       for (int y = 0; y < WORLD_Y; y++) {
         int cell_id = x + y * WORLD_X;
         if (IsOccupied(cell_id)) {
-          double clade_hue = pop[cell_id]->clade;
-          // std::cout << "Coloring: " << clade_hue << " " <<clade_hue/next_clade << std::endl;
-          clade_hue *= 260.0/next_clade;
-          std::string color = emp::ColorHSL(clade_hue,50,50);
+          auto taxon = systematics[0].DynamicCast<emp::Systematics<Cell, int>>()->GetTaxonAt(cell_id);
+          double depth = taxon->GetDepth();
+          double depth_hue = depth * 280.0/systematics[0]->GetMaxDepth();
+          // std::cout << depth_hue << std::endl;
+          std::string color = emp::ColorHSL(depth_hue,50,50);
+
+          // double clade_hue = pop[cell_id]->clade;
+          // // std::cout << "Coloring: " << clade_hue << " " <<clade_hue/next_clade << std::endl;
+          // clade_hue *= 260.0/next_clade;
+          // std::string color = emp::ColorHSL(clade_hue,50,50);
           cell_display.Rect(x*display_cell_size, y*display_cell_size, display_cell_size, display_cell_size, color, color);
+ 
           // switch(GetOrg(cell_id).state) {
           //   case CELL_STATE::HEALTHY:
           //     cell_display.Rect(x*display_cell_size, y*display_cell_size, display_cell_size, display_cell_size, "green","green");
