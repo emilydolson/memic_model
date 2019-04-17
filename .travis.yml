@@ -9,10 +9,10 @@ python:
 addons:
   apt:
     sources:
-      - llvm-toolchain-trusty-5.0
+      - llvm-toolchain-trusty-6.0
     packages:
-      - clang-5.0
-      - libclang-5.0-dev
+      - clang-6.0
+      - libclang-6.0-dev
 
 before_install:
 - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
