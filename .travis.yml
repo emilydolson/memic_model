@@ -17,3 +17,7 @@ install:
 
 script:
 - make test
+
+after_success: 
+- make coverage
+- curl -s https://codecov.io/bash | bash
