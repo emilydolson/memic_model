@@ -7,15 +7,17 @@ class ResourceGradient {
     using grid_t = emp::vector<emp::vector<double>>; // It might be possible to make these arrays
     grid_t curr_grid;
     grid_t next_grid;
-    double diffusion_coefficient = 0;
+    double diffusion_coefficient;
     int x_len;
     int y_len;
     int z_len;
-    bool toroidal = false;
+    bool toroidal;
 
     public:
     ResourceGradient(int x_len_in, int y_len_in=1, int z_len_in=1) :
-        x_len(x_len_in), y_len(y_len_in), z_len(z_len_in) {
+        diffusion_coefficient(0),
+        x_len(x_len_in), y_len(y_len_in), z_len(z_len_in),
+        toroidal(false) {
 
         curr_grid.resize(y_len);
         next_grid.resize(y_len);
@@ -35,7 +37,12 @@ class ResourceGradient {
         y_len = g.size();
         // TODO z_len
 
+        curr_grid.resize(y_len);
+        next_grid.resize(y_len);
+
         for (int y = 0; y < y_len; y++) {
+            curr_grid[y].resize(x_len);
+            next_grid[y].resize(x_len);
             for (int x = 0; x < x_len; x++) {
                 curr_grid[y][x] = g[y][x];
                 next_grid[y][x] = 0;
@@ -60,12 +67,20 @@ class ResourceGradient {
         next_grid[y][x] -= val;
     }
 
-    double GetVal(int x, int y) {
+    double GetVal(int x, int y) const {
         return curr_grid[y][x];
+    } 
+
+    double GetNextVal(int x, int y) const {
+        return next_grid[y][x];
     } 
 
     void SetDiffusionCoefficient(double coef) {
         diffusion_coefficient = coef;
+    }
+
+    void SetToroidal(bool tor) {
+        toroidal = tor;
     }
 
     void Update() {
@@ -164,8 +179,6 @@ class ResourceGradient {
     }
 
     void Diffuse() {
-        // TODO: Confirm that we don't need to account for oxygen diffusing out of
-        // a grid cell or that this somehow does
 
         for (int x = 0; x < x_len; x++) {
             for (int y = 0; y < y_len; y++) {

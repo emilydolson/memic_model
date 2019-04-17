@@ -30,3 +30,11 @@
 *.exe
 *.out
 *.app
+
+# vscode stuff
+.vscode
+
+# profiling stuff
+default.prof*
+fix_coverage.py
+force_cover

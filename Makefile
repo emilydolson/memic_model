@@ -8,7 +8,7 @@ CFLAGS_all := -Wall -Wno-unused-function -std=c++17 -I$(EMP_DIR)/
 # Native compiler information
 CXX_nat := g++
 CFLAGS_nat := -O3 -DNDEBUG $(CFLAGS_all)
-CFLAGS_nat_debug := -g $(CFLAGS_all)
+CFLAGS_nat_debug := -g -DEMP_TRACK_MEM $(CFLAGS_all)
 
 # Emscripten compiler information
 CXX_web := emcc
@@ -39,6 +39,24 @@ $(PROJECT):	source/native/$(PROJECT).cc
 
 $(PROJECT).js: source/web/$(PROJECT)-web.cc
 	$(CXX_web) $(CFLAGS_web) source/web/$(PROJECT)-web.cc -o web/$(PROJECT).js
+
+test: tests/unit_tests.cc
+	$(CXX_nat) $(CFLAGS_nat_debug) tests/unit_tests.cc -o test_debug.out
+	./test_debug.out 
+	$(CXX_nat) $(CFLAGS_nat) tests/unit_tests.cc -o test_optimized.out
+	./test_optimized.out
+
+coverage: tests/unit_tests.cc
+	cp ../force-cover/force_cover .
+	cp ../force-cover/fix_coverage.py .
+	rsync -r --exclude .git --exclude web . ../coverage_testing
+	tests/convert_for_coverage.sh $(CFLAGS_nat_debug)
+	clang++-6.0 -fprofile-instr-generate -fcoverage-mapping -O0 -fno-inline -fno-elide-constructors $(CFLAGS_nat_debug) ../coverage_testing/tests/unit_tests.cc -o coverage_test.out
+	./coverage_test.out
+	llvm-profdata merge default.profraw -o default.profdata
+	llvm-cov show coverage_test.out -instr-profile=default.proddata > coverage.txt
+	python fix_coverage.py coverage.txt
+	rm -r coverage_testing
 
 clean:
 	rm -f $(PROJECT) web/$(PROJECT).js web/*.js.map web/*.js.map *~ source/*.o
