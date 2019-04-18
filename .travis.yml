@@ -29,10 +29,10 @@ script:
 - make test
 
 after_success: 
-- git clone https://github.com/emilydolson/force-cover && cd force-cover && make force_cover CXX=clang++-7
+- git clone https://github.com/emilydolson/force-cover ../force-cover && cd ../force-cover && make force_cover CXX=clang++-7 && cd -
 - ls
 - ls ..
 - cp force_cover/force_cover .
 - cp force_cover/fix_coverage.py .
-- make coverage
+- make coverage CXX=clang++-7
 - curl -s https://codecov.io/bash | bash
