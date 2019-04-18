@@ -51,7 +51,7 @@ coverage: tests/unit_tests.cc
 	cp ../force-cover/fix_coverage.py .
 	rsync -r --exclude .git --exclude web . ../coverage_testing
 	tests/convert_for_coverage.sh $(CFLAGS_nat_debug)
-	clang++-6.0 -fprofile-instr-generate -fcoverage-mapping -O0 -fno-inline -fno-elide-constructors $(CFLAGS_nat_debug) ../coverage_testing/tests/unit_tests.cc -o coverage_test.out
+	clang++-7 -fprofile-instr-generate -fcoverage-mapping -O0 -fno-inline -fno-elide-constructors $(CFLAGS_nat_debug) ../coverage_testing/tests/unit_tests.cc -o coverage_test.out
 	./coverage_test.out
 	llvm-profdata merge default.profraw -o default.profdata
 	llvm-cov show coverage_test.out -instr-profile=default.proddata > coverage.txt
