@@ -40,6 +40,7 @@ struct Cell {
     CELL_STATE state;
     int age = 0;
     int clade = 0;
+    double hif1alpha = 0;
 
     Cell(CELL_STATE in_state, double in_stemness = 0) : 
       stemness(in_stemness), state(in_state) {;}
@@ -245,6 +246,10 @@ class HCAWorld : public emp::World<Cell> {
 
       // Query oxygen to test for hypoxia
       if (oxygen->GetVal(x, y) < OXYGEN_THRESHOLD) {
+        // If hypoxic, the hif1-alpha surpressor gets turned off
+        // causing hif1-alpha to accumulate
+        pop[cell_id]->hif1alpha = 1;
+
         // If hypoxic, die with specified probability
         if (!random_ptr->P(HYPOXIA_DEATH_PROB)) {
           Quiesce(cell_id); // Cell survives to next generation

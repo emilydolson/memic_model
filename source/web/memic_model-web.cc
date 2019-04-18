@@ -12,6 +12,8 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
   // friend class HCAWorld;
   // friend class UI::Animate;
 
+  using color_fun_t = std::function<std::string(int)>;
+
   MemicConfig config;
   emp::Random r;
   // HCAWorld world;
@@ -25,8 +27,23 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
   // UI::Canvas clade_display;
   const double display_cell_size = 5;
 
+  color_fun_t cell_color_fun;
+  UI::Selector cell_color_control;
+  color_fun_t phylo_depth_color_fun = [this](int cell_id) {
+                                        auto taxon = systematics[0].DynamicCast<emp::Systematics<Cell, int>>()->GetTaxonAt(cell_id);
+                                        double depth = taxon->GetDepth();
+                                        double depth_hue = depth * 280.0/systematics[0]->GetMaxDepth();
+                                        return emp::ColorHSL(depth_hue,50,50);
+                                     };
+  color_fun_t hif1alpha_color_fun = [this](int cell_id) {
+                                        double hue = pop[cell_id]->hif1alpha * 280.0;
+                                        return emp::ColorHSL(hue,50,50);
+                                     };
+
   public:
-  HCAWebInterface() : oxygen_area("oxygen_area"), cell_area("cell_area"), controls("control_area"), oxygen_display(400, 400, "oxygen_display"), cell_display(400, 400, "cell_display")
+  HCAWebInterface() : oxygen_area("oxygen_area"), cell_area("cell_area"), controls("control_area"), 
+    oxygen_display(400, 400, "oxygen_display"), cell_display(400, 400, "cell_display"),
+    cell_color_control("cell_color_control")
     // : anim([this](){DoFrame();}, oxygen_display, cell_display) 
   {
     SetupInterface();   
@@ -44,7 +61,21 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
     oxygen_area << "<h1 class='text-center'>Oxygen</h1>" << oxygen_display;
     cell_area << "<h1 class='text-center'>Phylogenetic Depth</h1>" << cell_display;
 
+    cell_color_fun = phylo_depth_color_fun;
+
+    cell_color_control.SetOption("Phylogenetic Depth", 
+                                 [this](){
+                                     cell_color_fun = phylo_depth_color_fun;
+                                 }, 0);
+
+    cell_color_control.SetOption("Hif1-alpha stain", 
+                                 [this](){
+                                     cell_color_fun = hif1alpha_color_fun;
+                                 }, 1);
+
+
     controls << GetToggleButton("but_toggle");
+    controls << " " << cell_color_control;
 
     oxygen_display.On("click", [this](int x, int y){OxygenClick(x, y);});;
     RedrawOxygen();
@@ -92,11 +123,11 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
       for (int y = 0; y < WORLD_Y; y++) {
         int cell_id = x + y * WORLD_X;
         if (IsOccupied(cell_id)) {
-          auto taxon = systematics[0].DynamicCast<emp::Systematics<Cell, int>>()->GetTaxonAt(cell_id);
-          double depth = taxon->GetDepth();
-          double depth_hue = depth * 280.0/systematics[0]->GetMaxDepth();
+          // auto taxon = systematics[0].DynamicCast<emp::Systematics<Cell, int>>()->GetTaxonAt(cell_id);
+          // double depth = taxon->GetDepth();
+          // double depth_hue = depth * 280.0/systematics[0]->GetMaxDepth();
           // std::cout << depth_hue << std::endl;
-          std::string color = emp::ColorHSL(depth_hue,50,50);
+          std::string color = cell_color_fun(cell_id);
 
           // double clade_hue = pop[cell_id]->clade;
           // // std::cout << "Coloring: " << clade_hue << " " <<clade_hue/next_clade << std::endl;
