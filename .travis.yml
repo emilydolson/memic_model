@@ -16,7 +16,7 @@ install:
 - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 90
 - git clone https://github.com/devosoft/Empirical ../Empirical
 - git clone https://github.com/emscripten-core/emsdk.git && cd emsdk && git pull && ./emsdk install latest && ./emsdk activate latest && . ./emsdk_env.sh && cd ..
-- git clone https://github.com/emilydolson/force-cover ../force_cover && cd ../force-cover && make force_cover
+- git clone https://github.com/emilydolson/force-cover && cd force-cover && make force_cover
 - pip install --user codecov
 addons:
   apt:
@@ -30,7 +30,9 @@ script:
 - make test
 
 after_success: 
-- cp ../force_cover/force_cover .
-- cp ../force_cover/fix_coverage.py .
+- ls
+- ls ..
+- cp force_cover/force_cover .
+- cp force_cover/fix_coverage.py .
 - make coverage
 - curl -s https://codecov.io/bash | bash
