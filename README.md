@@ -1,7 +1,8 @@
 # memic_model
 Model of cancer growth under spatially heterogeneous oxygen
 
-[![Build Status](https://travis-ci.com/emilydolson/memic_model.svg?branch=master)](https://travis-ci.com/emilydolson/memic_model)
+[![Build Status](https://travis-ci.com/emilydolson/memic_model.svg?branch=master)](https://travis-ci.com/emilydolson/memic_model) [![codecov](https://codecov.io/gh/emilydolson/memic_model/branch/master/graph/badge.svg)](https://codecov.io/gh/emilydolson/memic_model)
+
 
 ## Tentative specs:
 
