@@ -51,15 +51,17 @@ coverage: tests/unit_tests.cc
 	cp ../force-cover/fix_coverage.py .
 	rsync -r --exclude .git --exclude web . ../coverage_testing
 	tests/convert_for_coverage.sh $(CFLAGS_nat_debug)
-	clang++-7 -fprofile-instr-generate -fcoverage-mapping -O0 -fno-inline -fno-elide-constructors $(CFLAGS_nat_debug) ../coverage_testing/tests/unit_tests.cc -o coverage_test.out
+	clang++-7 -mllvm -enable-name-compression=false -fprofile-instr-generate -fcoverage-mapping -O0 -fno-inline -fno-elide-constructors $(CFLAGS_nat_debug) ../coverage_testing/tests/unit_tests.cc -o coverage_test.out
 	./coverage_test.out
 	llvm-profdata merge default.profraw -o default.profdata
-	llvm-cov show coverage_test.out -instr-profile=default.proddata > coverage.txt
+	llvm-cov show coverage_test.out -instr-profile=default.profdata > coverage.txt
 	python fix_coverage.py coverage.txt
-	rm -r coverage_testing
+	rm -r ../coverage_testing
+	rm force_cover
+	rm fix_coverage.py
 
 clean:
-	rm -f $(PROJECT) web/$(PROJECT).js web/*.js.map web/*.js.map *~ source/*.o
+	rm -f $(PROJECT) web/$(PROJECT).js web/*.js.map web/*.js.map *~ source/*.o test_debug.out test_optimized.out coverage_test.out coverage.txt default.profdata default.profraw
 
 # Debugging information
 print-%: ; @echo '$(subst ','\'',$*=$($*))'
