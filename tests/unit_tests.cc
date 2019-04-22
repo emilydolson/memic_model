@@ -171,3 +171,25 @@ TEST_CASE("Test toroidal diffusion", "[oxygen_gradient]") {
     CHECK(r.GetNextVal(0,49) == 0.01);
 
 }
+
+TEST_CASE("Test updating gradient", "[oxygen_gradient]") {
+    ResourceGradient r(x_len, y_len);
+
+    r.SetVal(10,10,5);
+    r.SetVal(1,1,5);
+    CHECK(r.GetVal(10,10) == 5);
+    CHECK(r.GetVal(1,1) == 5);
+
+    r.DecVal(10,10, 1);
+    r.SetNextVal(8,6,3);
+    r.SetNextVal(10,10,20);
+    r.DecNextVal(10,10,2);
+    CHECK(r.GetVal(10,10) == 4);
+    CHECK(r.GetNextVal(8,6) == 3);
+    CHECK(r.GetNextVal(10,10) == 18);
+
+    r.Update();
+    CHECK(r.GetVal(8,6) == 3);
+    CHECK(r.GetVal(10,10) == 18);
+    CHECK(r.GetVal(1,1) == 0);
+}
