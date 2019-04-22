@@ -1,10 +1,12 @@
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #include "catch.hpp"
 #include "../source/ResourceGradient.h"
+#include "../source/memic_model.h"
 
 int y_len = 50;
 int x_len = 100;
-
+MemicConfig config;
+HCAWorld world;
 
 TEST_CASE("Test constructor", "[oxygen_gradient]") {
     ResourceGradient r(x_len, y_len);
@@ -192,4 +194,10 @@ TEST_CASE("Test updating gradient", "[oxygen_gradient]") {
     CHECK(r.GetVal(8,6) == 3);
     CHECK(r.GetVal(10,10) == 18);
     CHECK(r.GetVal(1,1) == 0);
+}
+
+TEST_CASE("Test HCAWorld", "[full_model]") {
+    world.Setup(config);
+    world.Run();
+
 }
