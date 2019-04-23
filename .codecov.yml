@@ -1,0 +1,2 @@
+ignore:
+  - "tests/unit_tests.cc"  # Not really fair to include this in coverage
