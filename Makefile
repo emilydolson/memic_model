@@ -45,8 +45,8 @@ test: tests/unit_tests.cc
 	./test_debug.out 
 	$(CXX_nat) $(CFLAGS_nat) tests/unit_tests.cc -o test_optimized.out
 	./test_optimized.out
-	make web-debug
-	make web
+	#make web-debug
+	#make web
 
 coverage: tests/unit_tests.cc
 	cp ../force-cover/force_cover .
