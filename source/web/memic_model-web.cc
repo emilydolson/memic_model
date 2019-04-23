@@ -27,12 +27,19 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
   // UI::Canvas clade_display;
   const double display_cell_size = 5;
 
+  UI::Button toggle;
+  UI::Style button_style;
+
   color_fun_t cell_color_fun;
   UI::Selector cell_color_control;
   color_fun_t phylo_depth_color_fun = [this](int cell_id) {
                                         auto taxon = systematics[0].DynamicCast<emp::Systematics<Cell, int>>()->GetTaxonAt(cell_id);
                                         double depth = taxon->GetDepth();
-                                        double depth_hue = depth * 280.0/systematics[0]->GetMaxDepth();
+                                        double max_depth = systematics[0]->GetMaxDepth();
+                                        double depth_hue = 0;
+                                        if (max_depth > 0) {
+                                          depth_hue = depth * 280.0/max_depth;
+                                        }
                                         return emp::ColorHSL(depth_hue,50,50);
                                      };
   color_fun_t hif1alpha_color_fun = [this](int cell_id) {
@@ -59,27 +66,39 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
     cell_display.Clear("black");
 
     oxygen_area << "<h1 class='text-center'>Oxygen</h1>" << oxygen_display;
-    cell_area << "<h1 class='text-center'>Phylogenetic Depth</h1>" << cell_display;
+    cell_area << "<h1 class='text-center'>Cells</h1>" << cell_display;
 
     cell_color_fun = phylo_depth_color_fun;
 
     cell_color_control.SetOption("Phylogenetic Depth", 
                                  [this](){
                                      cell_color_fun = phylo_depth_color_fun;
+                                     RedrawCells();
                                  }, 0);
 
     cell_color_control.SetOption("Hif1-alpha stain", 
                                  [this](){
                                      cell_color_fun = hif1alpha_color_fun;
+                                     RedrawCells();
                                  }, 1);
 
 
-    controls << GetToggleButton("but_toggle");
+    toggle = GetToggleButton("but_toggle");
+    button_style.AddClass("btn");
+    button_style.AddClass("btn-primary");
+    toggle.SetCSS(button_style);
+    controls << toggle;
     controls << " " << cell_color_control;
 
     oxygen_display.On("click", [this](int x, int y){OxygenClick(x, y);});;
     RedrawOxygen();
     RedrawCells();
+    
+    emp::web::OnDocumentReady([](){
+        // EM_ASM(d3.select("#but_toggle").classed("btn btn-primary", true););
+        EM_ASM($('select').selectpicker('setStyle', 'btn-primary'););
+    });
+
   }
 
   void DoFrame() {
@@ -106,6 +125,8 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
         o2 *= 360;
         if (o2 > 360) {
           o2 = 360;
+        } else if (o2 < 0) {
+          o2 = 0;
         }
         std::string color = emp::ColorHSL(o2,50,50);
         oxygen_display.Rect(x*display_cell_size, y*display_cell_size, display_cell_size, display_cell_size, color, color);
