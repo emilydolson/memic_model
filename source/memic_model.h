@@ -76,6 +76,12 @@ class HCAWorld : public emp::World<Cell> {
   HCAWorld(emp::Random & r) : emp::World<Cell>(r) {;}
   HCAWorld() {;}
 
+  ~HCAWorld() {
+    if (oxygen) {
+      oxygen.Delete();
+    }
+  }
+
   void InitConfigs(MemicConfig & config) {
     TIME_STEPS = config.TIME_STEPS();
     NEUTRAL_MUTATION_RATE = config.NEUTRAL_MUTATION_RATE();
