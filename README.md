@@ -3,7 +3,7 @@ Model of cancer growth under spatially heterogeneous oxygen
 
 [![Build Status](https://travis-ci.com/emilydolson/memic_model.svg?branch=master)](https://travis-ci.com/emilydolson/memic_model) [![codecov](https://codecov.io/gh/emilydolson/memic_model/branch/master/graph/badge.svg)](https://codecov.io/gh/emilydolson/memic_model)
 
-# Dependencies
+## Dependencies
 
 - [Empirical](https://github.com/emilydolson/Empirical/tree/memic_model): Specifically the memic_model branch of my fork (will integrate into upstream master eventually). This is the core framework the model is built on.
 - [Bootstrap](https://getbootstrap.com/): Web framework that the site is built on (takes care of responsiveness for compatability with various devices)
