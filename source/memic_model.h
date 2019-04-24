@@ -73,7 +73,7 @@ class HCAWorld : public emp::World<Cell> {
 
   emp::Ptr<ResourceGradient> oxygen;
 
-  HCAWorld(emp::Random & r) : emp::World<Cell>(r) {;}
+  HCAWorld(emp::Random & r) : emp::World<Cell>(r), oxygen(nullptr) {;}
   HCAWorld() {;}
 
   ~HCAWorld() {
@@ -101,6 +101,10 @@ class HCAWorld : public emp::World<Cell> {
     BASAL_OXYGEN_CONSUMPTION_TUMOR = config.BASAL_OXYGEN_CONSUMPTION_TUMOR();
     KM = config.KM();
     INIT_POP_SIZE = config.INIT_POP_SIZE();
+
+    if (oxygen) {
+      oxygen->SetDiffusionCoefficient(OXYGEN_DIFFUSION_COEFFICIENT);
+    }
   }
 
   void InitPop() {
@@ -264,6 +268,10 @@ class HCAWorld : public emp::World<Cell> {
         // TODO: Consider replacing this with a function relating
         // division probability to oxygen availability, as in 
         // Grimes et al 2018
+      } else {
+        // If not hypoxic, the hif1-alpha surpressor is on
+        // causing hif1-alpha to not accumulate
+        pop[cell_id]->hif1alpha = 0;
       }
 
       // Check for space for division

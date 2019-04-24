@@ -5,6 +5,7 @@
 #include "web/web.h"
 #include "web/color_map.h"
 #include "../memic_model.h"
+#include "config/config_web_interface.h"
 
 namespace UI = emp::web;
 
@@ -15,6 +16,7 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
   using color_fun_t = std::function<std::string(int)>;
 
   MemicConfig config;
+  emp::ConfigWebUI config_ui;
   emp::Random r;
   // HCAWorld world;
 
@@ -48,7 +50,7 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
                                      };
 
   public:
-  HCAWebInterface() : oxygen_area("oxygen_area"), cell_area("cell_area"), controls("control_area"), 
+  HCAWebInterface() : config_ui(config), oxygen_area("oxygen_area"), cell_area("cell_area"), controls("control_area"), 
     oxygen_display(400, 400, "oxygen_display"), cell_display(400, 400, "cell_display"),
     cell_color_control("cell_color_control")
     // : anim([this](){DoFrame();}, oxygen_display, cell_display) 
@@ -99,6 +101,9 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
         EM_ASM($('select').selectpicker('setStyle', 'btn-primary'););
     });
 
+    config_ui.SetOnChangeFun([this](const std::string & val){ std::cout << "New val: " << val<<std::endl;;InitConfigs(config);});
+    config_ui.Setup();
+    controls << config_ui.GetDiv();
   }
 
   void DoFrame() {
