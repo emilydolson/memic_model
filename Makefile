@@ -13,7 +13,7 @@ CFLAGS_nat_debug := -g -DEMP_TRACK_MEM $(CFLAGS_all)
 # Emscripten compiler information
 CXX_web := emcc
 OFLAGS_web_all := -s "EXTRA_EXPORTED_RUNTIME_METHODS=['ccall', 'cwrap']" -s TOTAL_MEMORY=67108864 --js-library $(EMP_DIR)/web/library_emp.js --js-library $(EMP_DIR)/web/d3/library_d3.js -s EXPORTED_FUNCTIONS="['_main', '_empCppCallback']" -s DISABLE_EXCEPTION_CATCHING=1 -s NO_EXIT_RUNTIME=1 #--embed-file configs
-OFLAGS_web := -Oz -DNDEBUG
+OFLAGS_web := -Oz -DNDEBUG -s WASM=0
 OFLAGS_web_debug := -g4 -Oz -pedantic -Wno-dollar-in-identifier-extension -s ASSERTIONS=2 -s WASM=0 -s DEMANGLE_SUPPORT=1
 
 CFLAGS_web := $(CFLAGS_all) $(OFLAGS_web) $(OFLAGS_web_all)

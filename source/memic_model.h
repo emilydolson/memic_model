@@ -17,7 +17,7 @@ EMP_BUILD_CONFIG( MemicConfig,
   GROUP(CELL, "Cell settings"),
   VALUE(NEUTRAL_MUTATION_RATE, double, .05, "Probability of a neutral mutation (only relevant for phylogenetic signature)"),
   VALUE(ASYMMETRIC_DIVISION_PROB, double, 0, "Probability of a change in stemness"),
-  VALUE(MITOSIS_PROB, double, 0, "Probability of mitosis"),
+  VALUE(MITOSIS_PROB, double, .5, "Probability of mitosis"),
   VALUE(HYPOXIA_DEATH_PROB, double, .25, "Probability of dieing, given hypoxic conditions"),
   VALUE(AGE_LIMIT, int, 100, "Age over which non-stem cells die"),
   VALUE(BASAL_OXYGEN_CONSUMPTION_HEALTHY, double, .000375, "Base oxygen consumption rate for healthy cells"),
@@ -278,7 +278,7 @@ class HCAWorld : public emp::World<Cell> {
       int potential_offspring_cell = CanDivide(cell_id);
 
       // If space, divide
-      if (potential_offspring_cell != -1) {
+      if (potential_offspring_cell != -1 && random_ptr->P(MITOSIS_PROB)) {
         // Cell divides
 
         switch(pop[cell_id]->state) {
