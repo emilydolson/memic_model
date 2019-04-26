@@ -28,6 +28,14 @@ addons:
 
 script:
 - make test
+-	make web-debug
+- make web
+- make debug
+- ./memic_model
+- make clean
+- make
+- ./memic_model
+
 
 after_success: 
 - git clone https://github.com/emilydolson/force-cover ../force-cover && cd ../force-cover && make force_cover CXX=clang++-7 && cd -

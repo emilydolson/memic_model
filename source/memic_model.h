@@ -6,12 +6,18 @@
 #include "Evolve/World.h"
 
 
+// Default values for plate dimensions are extracted from MEMIC plate stl 
+
 EMP_BUILD_CONFIG( MemicConfig,
   GROUP(MAIN, "Global settings"),
   VALUE(SEED, int, -1, "Random number generator seed"),
   VALUE(TIME_STEPS, int, 1000, "Number of time steps to run for"),
-  VALUE(WORLD_X, int, 100, "Width of world (in number of cells)"),
-  VALUE(WORLD_Y, int, 100, "Height of world (in number of cells)"),
+  VALUE(PLATE_LENGTH, double, 10.0, "Length of plate in mm"),
+  VALUE(PLATE_WIDTH, double, 6.0, "Width of plate in mm"),
+  VALUE(PLATE_DEPTH, double, 1.45, "Depth of plate in mm"), 
+  VALUE(CELL_DIAMETER, double, 20.0, "Cell length and width in microns"),
+  // VALUE(WORLD_X, int, 100, "Width of world (in number of cells)"),
+  // VALUE(WORLD_Y, int, 100, "Height of world (in number of cells)"),
   VALUE(INIT_POP_SIZE, int, 100, "Number of cells to seed population with"),
 
   GROUP(CELL, "Cell settings"),
@@ -58,14 +64,21 @@ class HCAWorld : public emp::World<Cell> {
   double OXYGEN_CONSUMPTION_DIVISION_TUMOR;
   double HYPOXIA_DEATH_PROB;
   int AGE_LIMIT;
-  int WORLD_X;
-  int WORLD_Y;
   int INIT_POP_SIZE;
   int DIFFUSION_STEPS_PER_TIME_STEP;
   double BASAL_OXYGEN_CONSUMPTION_HEALTHY;
   double BASAL_OXYGEN_CONSUMPTION_TUMOR;
   double INITIAL_OXYGEN_LEVEL;
   double KM;
+
+  double PLATE_LENGTH;
+  double PLATE_WIDTH;
+  double PLATE_DEPTH;
+  double CELL_DIAMETER;
+
+  int WORLD_X;
+  int WORLD_Y;
+  int WORLD_Z;
 
   int next_clade = 0;
 
@@ -93,14 +106,20 @@ class HCAWorld : public emp::World<Cell> {
     OXYGEN_CONSUMPTION_DIVISION_TUMOR = config.OXYGEN_CONSUMPTION_DIVISION_TUMOR();
     HYPOXIA_DEATH_PROB = config.HYPOXIA_DEATH_PROB();
     AGE_LIMIT = config.AGE_LIMIT();
-    WORLD_X = config.WORLD_X();
-    WORLD_Y = config.WORLD_Y();
     INITIAL_OXYGEN_LEVEL = config.INITIAL_OXYGEN_LEVEL();
     DIFFUSION_STEPS_PER_TIME_STEP = config.DIFFUSION_STEPS_PER_TIME_STEP();
     BASAL_OXYGEN_CONSUMPTION_HEALTHY = config.BASAL_OXYGEN_CONSUMPTION_HEALTHY();
     BASAL_OXYGEN_CONSUMPTION_TUMOR = config.BASAL_OXYGEN_CONSUMPTION_TUMOR();
     KM = config.KM();
     INIT_POP_SIZE = config.INIT_POP_SIZE();
+    PLATE_LENGTH = config.PLATE_LENGTH();
+    PLATE_WIDTH = config.PLATE_WIDTH();
+    PLATE_DEPTH = config.PLATE_DEPTH();
+    CELL_DIAMETER = config.CELL_DIAMETER();
+
+    WORLD_X = floor(PLATE_WIDTH / (CELL_DIAMETER/1000));
+    WORLD_Y = floor(PLATE_LENGTH / (CELL_DIAMETER/1000));
+    WORLD_Z = floor(PLATE_DEPTH / (CELL_DIAMETER/1000));
 
     if (oxygen) {
       oxygen->SetDiffusionCoefficient(OXYGEN_DIFFUSION_COEFFICIENT);
@@ -121,7 +140,9 @@ class HCAWorld : public emp::World<Cell> {
   void InitOxygen() {
     for (int x = 0; x < WORLD_X; x++) {
       for (int y = 0; y < WORLD_Y; y++) {
-        oxygen->SetVal(x, y, INITIAL_OXYGEN_LEVEL);
+        for (int z = 0; z < WORLD_Z; z++) {
+          oxygen->SetVal(x, y, z, INITIAL_OXYGEN_LEVEL);
+        }
       }
     }
   }
@@ -133,13 +154,13 @@ class HCAWorld : public emp::World<Cell> {
 
       // Oxygen inflow along edge
       for (int x = 0; x < WORLD_X; x++) {
-        oxygen->SetVal(x, 0, 1);
+        oxygen->SetVal(x, 0, WORLD_Z-1, 1);
       }
   }
 
   void Setup(MemicConfig & config, bool web = false) {
     InitConfigs(config);
-    oxygen.New(WORLD_X, WORLD_Y);
+    oxygen.New(WORLD_X, WORLD_Y, WORLD_Z);
     oxygen->SetDiffusionCoefficient(OXYGEN_DIFFUSION_COEFFICIENT);
 
     if (!web) { // Web version needs to do diffusion separately to visualize
@@ -164,16 +185,16 @@ class HCAWorld : public emp::World<Cell> {
       if (IsOccupied(cell_id)) {
         int x = cell_id % WORLD_X;
         int y = cell_id / WORLD_X;
-        double oxygen_loss_multiplier = oxygen->GetVal(x, y);
+        double oxygen_loss_multiplier = oxygen->GetVal(x, y, 0);
         oxygen_loss_multiplier /= oxygen_loss_multiplier + KM;
 
         switch (pop[cell_id]->state) {
           case CELL_STATE::HEALTHY:
-            oxygen->DecNextVal(x, y, BASAL_OXYGEN_CONSUMPTION_HEALTHY * oxygen_loss_multiplier);
+            oxygen->DecNextVal(x, y, 0, BASAL_OXYGEN_CONSUMPTION_HEALTHY * oxygen_loss_multiplier);
             break;
 
           case CELL_STATE::TUMOR:
-            oxygen->DecNextVal(x, y, BASAL_OXYGEN_CONSUMPTION_TUMOR * oxygen_loss_multiplier);
+            oxygen->DecNextVal(x, y, 0, BASAL_OXYGEN_CONSUMPTION_TUMOR * oxygen_loss_multiplier);
             break;
 
           default:
@@ -255,7 +276,7 @@ class HCAWorld : public emp::World<Cell> {
       int y = cell_id / WORLD_X;
 
       // Query oxygen to test for hypoxia
-      if (oxygen->GetVal(x, y) < OXYGEN_THRESHOLD) {
+      if (oxygen->GetVal(x, y, 0) < OXYGEN_THRESHOLD) {
         // If hypoxic, the hif1-alpha surpressor gets turned off
         // causing hif1-alpha to accumulate
         pop[cell_id]->hif1alpha = 1;
@@ -283,10 +304,10 @@ class HCAWorld : public emp::World<Cell> {
 
         switch(pop[cell_id]->state) {
           case CELL_STATE::HEALTHY:
-            oxygen->DecNextVal(x, y, OXYGEN_CONSUMPTION_DIVISION_HEALTHY);
+            oxygen->DecNextVal(x, y, 0, OXYGEN_CONSUMPTION_DIVISION_HEALTHY);
             break;
           case CELL_STATE::TUMOR:
-            oxygen->DecNextVal(x, y, OXYGEN_CONSUMPTION_DIVISION_TUMOR);
+            oxygen->DecNextVal(x, y, 0, OXYGEN_CONSUMPTION_DIVISION_TUMOR);
             break;
           default:
             std::cout << "INVALID CELL TYPE" << std::endl;

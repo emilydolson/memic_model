@@ -27,10 +27,12 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
   UI::Canvas oxygen_display;
   UI::Canvas cell_display;
   // UI::Canvas clade_display;
-  const double display_cell_size = 5;
+  const double display_cell_size = 10;
 
   UI::Button toggle;
   UI::Style button_style;
+  bool draw_cells = true;
+
 
   color_fun_t cell_color_fun;
   UI::Selector cell_color_control;
@@ -51,7 +53,7 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
 
   public:
   HCAWebInterface() : config_ui(config), oxygen_area("oxygen_area"), cell_area("cell_area"), controls("control_area"), 
-    oxygen_display(400, 400, "oxygen_display"), cell_display(400, 400, "cell_display"),
+    oxygen_display(100, 100, "oxygen_display"), cell_display(100, 100, "cell_display"),
     cell_color_control("cell_color_control")
     // : anim([this](){DoFrame();}, oxygen_display, cell_display) 
   {
@@ -60,15 +62,20 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
 
   void SetupInterface() {
     GetRandom().ResetSeed(config.SEED());
+    config.CELL_DIAMETER(200);
     Setup(config, true);
+
+    oxygen_area.SetWidth(WORLD_X * display_cell_size);
     oxygen_display.SetSize(WORLD_X * display_cell_size, WORLD_Y * display_cell_size);
     oxygen_display.Clear("black");
 
+    cell_area.SetWidth(WORLD_X * display_cell_size);
     cell_display.SetSize(WORLD_X * display_cell_size, WORLD_Y * display_cell_size);
     cell_display.Clear("black");
 
     oxygen_area << "<h1 class='text-center'>Oxygen</h1>" << oxygen_display;
     cell_area << "<h1 class='text-center'>Cells</h1>" << cell_display;
+    controls << "<h1 class='text-center'>Controls</h1>";
 
     cell_color_fun = phylo_depth_color_fun;
 
@@ -89,8 +96,12 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
     button_style.AddClass("btn");
     button_style.AddClass("btn-primary");
     toggle.SetCSS(button_style);
+
+    UI::Button draw_cells_toggle([this](){draw_cells = !draw_cells;}, "Toggle drawing cells");
+    draw_cells_toggle.SetCSS(button_style);
+
     controls << toggle;
-    controls << " " << cell_color_control;
+    controls << " " << draw_cells_toggle << " " << cell_color_control;
 
     oxygen_display.On("click", [this](int x, int y){OxygenClick(x, y);});;
     RedrawOxygen();
@@ -121,7 +132,10 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
     if (frame_count % DIFFUSION_STEPS_PER_TIME_STEP == 0) {
       RunStep();
       RedrawOxygen();
-      RedrawCells();
+      if (draw_cells) {
+        RedrawCells();
+      }
+
     }
 
   }
@@ -203,8 +217,8 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
     size_t pos_x = (size_t) (WORLD_X * px);
     size_t pos_y = (size_t) (WORLD_Y * py);
     // std::cout << "x: " << x << " y: " << y << "WORLD_X: " << WORLD_X << " WORLD_Y: " << WORLD_Y << " canvas_x: " << canvas_x <<" canvas_y: " << canvas_y  << " px: " << px <<  " py: " << py <<" pos_x: " << pos_x << " pos_y: " << pos_y <<std::endl;
-    oxygen->SetNextVal(pos_x, pos_y, 1);
-    oxygen->SetVal(pos_x, pos_y, 1);
+    oxygen->SetNextVal(pos_x, pos_y, 0, 1);
+    oxygen->SetVal(pos_x, pos_y, 0, 1);
   }
 
 };
