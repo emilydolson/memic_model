@@ -26,10 +26,8 @@ EMP_BUILD_CONFIG( MemicConfig,
   VALUE(MITOSIS_PROB, double, .5, "Probability of mitosis"),
   VALUE(HYPOXIA_DEATH_PROB, double, .25, "Probability of dieing, given hypoxic conditions"),
   VALUE(AGE_LIMIT, int, 100, "Age over which non-stem cells die"),
-  VALUE(BASAL_OXYGEN_CONSUMPTION_HEALTHY, double, .000375, "Base oxygen consumption rate for healthy cells"),
-  VALUE(BASAL_OXYGEN_CONSUMPTION_TUMOR, double, .00075, "Base oxygen consumption rate for tumor cells"),
-  VALUE(OXYGEN_CONSUMPTION_DIVISION_HEALTHY, double, .000375*5, "Amount of oxygen a cell consumes on division"),
-  VALUE(OXYGEN_CONSUMPTION_DIVISION_TUMOR, double, .00075*5, "Amount of oxygen a cell consumes on division"),
+  VALUE(BASAL_OXYGEN_CONSUMPTION, double, .00075, "Base oxygen consumption rate"),
+  VALUE(OXYGEN_CONSUMPTION_DIVISION, double, .00075*5, "Amount of oxygen a cell consumes on division"),
   
   GROUP(OXYGEN, "Oxygen settings"),
   VALUE(INITIAL_OXYGEN_LEVEL, double, .5, "Initial oxygen level (will be placed in all cells)"),
@@ -39,17 +37,14 @@ EMP_BUILD_CONFIG( MemicConfig,
   VALUE(KM, double, 0.01, "Michaelis-Menten kinetic parameter"),
 );
 
-enum class CELL_STATE {TUMOR=0, HEALTHY=1};
-
 struct Cell {
     double stemness;
-    CELL_STATE state;
     int age = 0;
     int clade = 0;
     double hif1alpha = 0;
 
-    Cell(CELL_STATE in_state, double in_stemness = 0) : 
-      stemness(in_stemness), state(in_state) {;}
+    Cell(double in_stemness = 0) : 
+      stemness(in_stemness) {;}
 };
 
 class HCAWorld : public emp::World<Cell> {
@@ -60,14 +55,12 @@ class HCAWorld : public emp::World<Cell> {
   double OXYGEN_DIFFUSION_COEFFICIENT;
   double MITOSIS_PROB;
   double OXYGEN_THRESHOLD;
-  double OXYGEN_CONSUMPTION_DIVISION_HEALTHY;
-  double OXYGEN_CONSUMPTION_DIVISION_TUMOR;
+  double OXYGEN_CONSUMPTION_DIVISION;
   double HYPOXIA_DEATH_PROB;
   int AGE_LIMIT;
   int INIT_POP_SIZE;
   int DIFFUSION_STEPS_PER_TIME_STEP;
-  double BASAL_OXYGEN_CONSUMPTION_HEALTHY;
-  double BASAL_OXYGEN_CONSUMPTION_TUMOR;
+  double BASAL_OXYGEN_CONSUMPTION;
   double INITIAL_OXYGEN_LEVEL;
   double KM;
 
@@ -102,14 +95,12 @@ class HCAWorld : public emp::World<Cell> {
     MITOSIS_PROB = config.MITOSIS_PROB();
     OXYGEN_DIFFUSION_COEFFICIENT = config.OXYGEN_DIFFUSION_COEFFICIENT();
     OXYGEN_THRESHOLD = config.OXYGEN_THRESHOLD();
-    OXYGEN_CONSUMPTION_DIVISION_HEALTHY = config.OXYGEN_CONSUMPTION_DIVISION_HEALTHY();
-    OXYGEN_CONSUMPTION_DIVISION_TUMOR = config.OXYGEN_CONSUMPTION_DIVISION_TUMOR();
+    OXYGEN_CONSUMPTION_DIVISION = config.OXYGEN_CONSUMPTION_DIVISION();
     HYPOXIA_DEATH_PROB = config.HYPOXIA_DEATH_PROB();
     AGE_LIMIT = config.AGE_LIMIT();
     INITIAL_OXYGEN_LEVEL = config.INITIAL_OXYGEN_LEVEL();
     DIFFUSION_STEPS_PER_TIME_STEP = config.DIFFUSION_STEPS_PER_TIME_STEP();
-    BASAL_OXYGEN_CONSUMPTION_HEALTHY = config.BASAL_OXYGEN_CONSUMPTION_HEALTHY();
-    BASAL_OXYGEN_CONSUMPTION_TUMOR = config.BASAL_OXYGEN_CONSUMPTION_TUMOR();
+    BASAL_OXYGEN_CONSUMPTION = config.BASAL_OXYGEN_CONSUMPTION();
     KM = config.KM();
     INIT_POP_SIZE = config.INIT_POP_SIZE();
     PLATE_LENGTH = config.PLATE_LENGTH();
@@ -133,7 +124,7 @@ class HCAWorld : public emp::World<Cell> {
     pop.resize(WORLD_X*WORLD_Y);
     for (int cell_id = 0; cell_id < INIT_POP_SIZE; cell_id++) {
       int spot = random_ptr->GetUInt(WORLD_Y*WORLD_X);
-      InjectAt(Cell(CELL_STATE::TUMOR), spot);
+      InjectAt(Cell(), spot);
     }
   }
 
@@ -187,20 +178,7 @@ class HCAWorld : public emp::World<Cell> {
         int y = cell_id / WORLD_X;
         double oxygen_loss_multiplier = oxygen->GetVal(x, y, 0);
         oxygen_loss_multiplier /= oxygen_loss_multiplier + KM;
-
-        switch (pop[cell_id]->state) {
-          case CELL_STATE::HEALTHY:
-            oxygen->DecNextVal(x, y, 0, BASAL_OXYGEN_CONSUMPTION_HEALTHY * oxygen_loss_multiplier);
-            break;
-
-          case CELL_STATE::TUMOR:
-            oxygen->DecNextVal(x, y, 0, BASAL_OXYGEN_CONSUMPTION_TUMOR * oxygen_loss_multiplier);
-            break;
-
-          default:
-            emp_assert(false, "INVALID CELL STATE");
-            break;
-        }
+        oxygen->DecNextVal(x, y, 0, BASAL_OXYGEN_CONSUMPTION * oxygen_loss_multiplier);
       }
     }
   }
@@ -209,8 +187,6 @@ class HCAWorld : public emp::World<Cell> {
   /// Determine if cell can divide (i.e. is space available). If yes, return
   /// id of cell that it can divide into. If not, return -1.
   int CanDivide(int cell_id) {
-
-    bool healthy = pop[cell_id]->state == CELL_STATE::HEALTHY;
 
     emp::vector<int> open_spots;
     int x_coord = (cell_id % WORLD_X);
@@ -223,8 +199,7 @@ class HCAWorld : public emp::World<Cell> {
         int this_cell = y*WORLD_X + x;
         // Cells can be divided into if they are empty or if they are healthy and the
         // dividing cell is cancerous
-        if (!IsOccupied(this_cell) ||
-            (pop[this_cell]->state == CELL_STATE::HEALTHY && !healthy)) {
+        if (!IsOccupied(this_cell)) {
           open_spots.push_back(this_cell);
         }
       }
@@ -301,18 +276,7 @@ class HCAWorld : public emp::World<Cell> {
       // If space, divide
       if (potential_offspring_cell != -1 && random_ptr->P(MITOSIS_PROB)) {
         // Cell divides
-
-        switch(pop[cell_id]->state) {
-          case CELL_STATE::HEALTHY:
-            oxygen->DecNextVal(x, y, 0, OXYGEN_CONSUMPTION_DIVISION_HEALTHY);
-            break;
-          case CELL_STATE::TUMOR:
-            oxygen->DecNextVal(x, y, 0, OXYGEN_CONSUMPTION_DIVISION_TUMOR);
-            break;
-          default:
-            std::cout << "INVALID CELL TYPE" << std::endl;
-            break;
-        }
+        oxygen->DecNextVal(x, y, 0, OXYGEN_CONSUMPTION_DIVISION);
 
         // Handle daughter cell in previously empty spot
         before_repro_sig.Trigger(cell_id);
