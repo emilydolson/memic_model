@@ -31,10 +31,10 @@ script:
 - make web-debug
 - make web
 - make debug
-- ./memic_model
+- ./memic_model -TIME_STEPS 5
 - make clean
 - make
-- ./memic_model
+- ./memic_model -TIME_STEPS 5
 
 
 after_success: 
