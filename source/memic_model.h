@@ -122,10 +122,18 @@ class HCAWorld : public emp::World<Cell> {
     //   InjectAt(Cell(CELL_STATE::HEALTHY), cell_id);
     // }
     pop.resize(WORLD_X*WORLD_Y);
+    int initial_spot = random_ptr->GetUInt(WORLD_Y*WORLD_X);
+    InjectAt(Cell(), initial_spot);
+
     for (int cell_id = 0; cell_id < INIT_POP_SIZE; cell_id++) {
       int spot = random_ptr->GetUInt(WORLD_Y*WORLD_X);
-      InjectAt(Cell(), spot);
+      while (spot == initial_spot) {
+        spot = random_ptr->GetUInt(WORLD_Y*WORLD_X);        
+      }
+      AddOrgAt(emp::NewPtr<Cell>(), spot, initial_spot);
     }
+
+    RemoveOrgAt(initial_spot);
   }
 
   void InitOxygen() {

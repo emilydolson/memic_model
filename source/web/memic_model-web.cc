@@ -47,6 +47,25 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
                                         }
                                         return emp::ColorHSL(depth_hue,50,50);
                                      };
+  color_fun_t origin_time_color_fun = [this](int cell_id) {
+                                        auto taxon = systematics[0].DynamicCast<emp::Systematics<Cell, int>>()->GetTaxonAt(cell_id);
+                                        double origin = taxon->GetOriginationTime();
+                                        double origin_hue = 0;
+                                        if (update > 0) {
+                                          origin_hue = origin * 280.0/update;
+                                        }
+                                        return emp::ColorHSL(origin_hue,50,50);
+                                     };
+  color_fun_t evolutionary_distinctiveness_color_fun = [this](int cell_id) {
+                                        auto taxon = systematics[0].DynamicCast<emp::Systematics<Cell, int>>()->GetTaxonAt(cell_id);
+                                        double distinctiveness = systematics[0].DynamicCast<emp::Systematics<Cell, int>>()->GetEvolutionaryDistinctiveness(taxon, update);
+                                        double max_distinctiveness = update;
+                                        double distinctiveness_hue = 0;
+                                        if (max_distinctiveness > 0) {
+                                          distinctiveness_hue = distinctiveness * 280.0/max_distinctiveness;
+                                        }
+                                        return emp::ColorHSL(distinctiveness_hue,50,50);
+                                     };
   color_fun_t hif1alpha_color_fun = [this](int cell_id) {
                                         double hue = pop[cell_id]->hif1alpha * 280.0;
                                         return emp::ColorHSL(hue,50,50);
@@ -88,6 +107,18 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
                                      cell_color_fun = phylo_depth_color_fun;
                                      RedrawCells();
                                  }, 0);
+
+    cell_color_control.SetOption("Origin Time", 
+                                 [this](){
+                                     cell_color_fun = origin_time_color_fun;
+                                     RedrawCells();
+                                 }, 2);
+
+    cell_color_control.SetOption("Evolutionary Distinctiveness", 
+                                 [this](){
+                                     cell_color_fun = evolutionary_distinctiveness_color_fun;
+                                     RedrawCells();
+                                 }, 3);
 
     cell_color_control.SetOption("Hif1-alpha stain", 
                                  [this](){
