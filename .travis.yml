@@ -28,7 +28,7 @@ addons:
 
 script:
 - make test
--	make web-debug
+- make web-debug
 - make web
 - make debug
 - ./memic_model
