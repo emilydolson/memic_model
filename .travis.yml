@@ -38,6 +38,6 @@ script:
 
 
 after_success: 
-- git clone https://github.com/emilydolson/force-cover ../force-cover && cd ../force-cover && make force_cover CXX=clang++-7 && cd -
+- git clone https://github.com/emilydolson/force-cover ../force-cover && cd ../force-cover && make force_cover CXX=/usr/bin/clang++-7 && cd -
 - make coverage CXX=clang++-7
 - curl -s https://codecov.io/bash | bash
