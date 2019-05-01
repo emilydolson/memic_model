@@ -236,15 +236,28 @@ TEST_CASE("Test updating gradient", "[oxygen_gradient]") {
 }
 
 TEST_CASE("Test HCAWorld", "[full_model]") {
+
+    // Test destructor
+    emp::Ptr<HCAWorld> world_ptr;
+    emp::Random r;
+    world_ptr.New(r);
+    world_ptr.Delete();
+
     config.TIME_STEPS(5);
     config.CELL_DIAMETER(200);
     config.NEUTRAL_MUTATION_RATE(.75);
     world.Setup(config);
 
+    CHECK(world.GetWorldX() == 30);
+    CHECK(world.GetWorldY() == 50);
+    CHECK(world.GetWorldZ() == 7);
+
     world.BasalOxygenConsumption();
 
+    size_t example_id = 0;
     for (size_t cell_id = 0; cell_id < world.GetSize(); cell_id++) {
         if (world.IsOccupied(cell_id)) {
+            example_id = cell_id;
             int age = world.GetOrg(cell_id).age;
             CHECK(!world.IsOccupied(emp::WorldPosition(cell_id, 1)));
             world.Quiesce(cell_id);
@@ -269,6 +282,10 @@ TEST_CASE("Test HCAWorld", "[full_model]") {
             CHECK(world.GetOxygen().GetNextVal(cell_id % world.GetWorldX(), cell_id / world.GetWorldX()) == 0); 
         }
     }
+
+    world.GetOxygen().SetVal(example_id % world.GetWorldX(), example_id / world.GetWorldX(),0,0);
+    world.RunStep();
+    CHECK((!world.IsOccupied(example_id) || world.GetOrg(example_id).hif1alpha == 1));
 
     world.Reset(config);
     config.OXYGEN_DIFFUSION_COEFFICIENT(.09);
