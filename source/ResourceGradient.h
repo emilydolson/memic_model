@@ -87,6 +87,10 @@ class ResourceGradient {
         diffusion_coefficient = coef;
     }
 
+    double GetDiffusionCoefficient() {
+        return diffusion_coefficient;
+    }
+
     void SetToroidal(bool tor) {
         toroidal = tor;
     }

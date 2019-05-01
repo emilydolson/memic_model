@@ -197,6 +197,17 @@ TEST_CASE("Test Z axis", "[oxygen_gradient]") {
     CHECK(r.GetNeighborOxygen(1,3,3) == 2);
     CHECK(r.GetNeighborOxygen(2,2,3) == 2);
     CHECK(r.GetNeighborOxygen(0,2,3) == 2);
+
+    r.SetToroidal(true);
+
+    CHECK(r.GetNeighborOxygen(1,2,3) == 0);
+    CHECK(r.GetNeighborOxygen(1,2,2) == 2);
+    CHECK(r.GetNeighborOxygen(1,2,4) == 2);
+    CHECK(r.GetNeighborOxygen(1,1,3) == 2);
+    CHECK(r.GetNeighborOxygen(1,3,3) == 2);
+    CHECK(r.GetNeighborOxygen(2,2,3) == 2);
+    CHECK(r.GetNeighborOxygen(0,2,3) == 2);
+
 }
 
 TEST_CASE("Test updating gradient", "[oxygen_gradient]") {
@@ -227,7 +238,42 @@ TEST_CASE("Test updating gradient", "[oxygen_gradient]") {
 TEST_CASE("Test HCAWorld", "[full_model]") {
     config.TIME_STEPS(5);
     config.CELL_DIAMETER(200);
+    config.NEUTRAL_MUTATION_RATE(.75);
     world.Setup(config);
+
+    world.BasalOxygenConsumption();
+
+    for (size_t cell_id = 0; cell_id < world.GetSize(); cell_id++) {
+        if (world.IsOccupied(cell_id)) {
+            int age = world.GetOrg(cell_id).age;
+            CHECK(!world.IsOccupied(emp::WorldPosition(cell_id, 1)));
+            world.Quiesce(cell_id);
+            CHECK(age + 1 == world.GetOrg(cell_id).age);
+            CHECK(world.GetOrg(cell_id) == world.GetNextOrg(cell_id));
+
+            Cell& cell_org = world.GetOrg(cell_id);
+            int clade_before = cell_org.clade;            
+
+            bool mutated = false;
+            while(!mutated) {
+                mutated = world.Mutate(&cell_org);
+            }
+
+            CHECK(clade_before != cell_org.clade);
+            CHECK(cell_org.age == 0);
+
+            CHECK(world.GetOxygen().GetVal(cell_id % world.GetWorldX(), cell_id / world.GetWorldX()) == config.INITIAL_OXYGEN_LEVEL()); 
+            CHECK(world.GetOxygen().GetNextVal(cell_id % world.GetWorldX(), cell_id / world.GetWorldX()) == Approx(-(config.BASAL_OXYGEN_CONSUMPTION() * config.INITIAL_OXYGEN_LEVEL()/(config.INITIAL_OXYGEN_LEVEL() + config.KM())))); 
+        } else {
+            CHECK(world.GetOxygen().GetVal(cell_id % world.GetWorldX(), cell_id / world.GetWorldX()) == config.INITIAL_OXYGEN_LEVEL()); 
+            CHECK(world.GetOxygen().GetNextVal(cell_id % world.GetWorldX(), cell_id / world.GetWorldX()) == 0); 
+        }
+    }
+
+    world.Reset(config);
+    config.OXYGEN_DIFFUSION_COEFFICIENT(.09);
+    world.InitConfigs(config);
+    CHECK(world.GetOxygen().GetDiffusionCoefficient() == .09);
     world.Run();
 
 }

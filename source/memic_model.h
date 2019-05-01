@@ -38,13 +38,17 @@ EMP_BUILD_CONFIG( MemicConfig,
 );
 
 struct Cell {
-    double stemness;
+    double stemness = 1;
     int age = 0;
     int clade = 0;
     double hif1alpha = 0;
 
     Cell(double in_stemness = 0) : 
       stemness(in_stemness) {;}
+
+    bool operator== (const Cell & other) const {
+      return age == other.age && clade == other.clade;
+    }
 };
 
 class HCAWorld : public emp::World<Cell> {
@@ -73,7 +77,7 @@ class HCAWorld : public emp::World<Cell> {
   int WORLD_Y;
   int WORLD_Z;
 
-  int next_clade = 0;
+  int next_clade = 1;
 
   public:
 
@@ -117,6 +121,19 @@ class HCAWorld : public emp::World<Cell> {
     }
   }
 
+  int GetWorldX() {
+    return WORLD_X;
+  }
+
+  int GetWorldY() {
+    return WORLD_Y;
+  }
+
+  int GetWorldZ() {
+    return WORLD_Z;
+  }
+
+
   void InitPop() {
     // for (int cell_id = 0; cell_id < WORLD_X * WORLD_Y; cell_id++) {
     //   InjectAt(Cell(CELL_STATE::HEALTHY), cell_id);
@@ -146,6 +163,10 @@ class HCAWorld : public emp::World<Cell> {
     }
   }
 
+  ResourceGradient& GetOxygen() {
+    return *oxygen;
+  }
+
   void UpdateOxygen() {
       BasalOxygenConsumption();
       oxygen->Diffuse();
@@ -161,6 +182,7 @@ class HCAWorld : public emp::World<Cell> {
     Clear();
     if (oxygen) {
       oxygen.Delete();
+      oxygen = nullptr;
     }
     Setup(config, web);    
   }
@@ -247,8 +269,8 @@ class HCAWorld : public emp::World<Cell> {
     // Quiescence - stick the cell back into the population in
     // the same spot but don't change anything else
     // std::cout << "Quieseing" << std::endl;
+    pop[cell_id]->age++;
     emp::Ptr<Cell> cell = emp::NewPtr<Cell>(*pop[cell_id]);
-    cell->age++;
     AddOrgAt(cell, emp::WorldPosition(cell_id,1), cell_id);
   }
 
