@@ -101,7 +101,7 @@ TEST_CASE("Test turning off diffusion", "[oxygen_gradient]") {
     r.Diffuse();
     for (int y = 0; y < y_len; y++) {
         for (int x = 0; x < x_len; x++) {
-            CHECK(r.GetVal(x, y,0) == 0);
+            CHECK(r.GetVal(x, y, 0) == 0);
             CHECK(r.GetNeighborOxygen(x,y,0) == 0);
         }
     }
@@ -183,8 +183,24 @@ TEST_CASE("Test toroidal diffusion", "[oxygen_gradient]") {
 
 }
 
+TEST_CASE("Test Z axis", "[oxygen_gradient]") {
+    ResourceGradient r(x_len, y_len, 10);
+
+    // Add some oxygen (and make sure that it works)
+    r.SetVal(1,2,3,2);
+    CHECK(r.GetVal(1,2,3) == 2);
+
+    CHECK(r.GetNeighborOxygen(1,2,3) == 0);
+    CHECK(r.GetNeighborOxygen(1,2,2) == 2);
+    CHECK(r.GetNeighborOxygen(1,2,4) == 2);
+    CHECK(r.GetNeighborOxygen(1,1,3) == 2);
+    CHECK(r.GetNeighborOxygen(1,3,3) == 2);
+    CHECK(r.GetNeighborOxygen(2,2,3) == 2);
+    CHECK(r.GetNeighborOxygen(0,2,3) == 2);
+}
+
 TEST_CASE("Test updating gradient", "[oxygen_gradient]") {
-    ResourceGradient r(x_len, y_len);
+    ResourceGradient r(x_len, y_len, 10);
 
     r.SetVal(10,10,0,5);
     r.SetVal(1,1,0,5);
@@ -195,14 +211,17 @@ TEST_CASE("Test updating gradient", "[oxygen_gradient]") {
     r.SetNextVal(8,6,0,3);
     r.SetNextVal(10,10,0,20);
     r.DecNextVal(10,10,0,2);
+    r.SetNextVal(5,5,5,-4);
     CHECK(r.GetVal(10,10,0) == 4);
     CHECK(r.GetNextVal(8,6,0) == 3);
     CHECK(r.GetNextVal(10,10,0) == 18);
+    CHECK(r.GetNextVal(5,5,5) == -4);
 
     r.Update();
     CHECK(r.GetVal(8,6,0) == 3);
     CHECK(r.GetVal(10,10,0) == 18);
     CHECK(r.GetVal(1,1,0) == 0);
+    CHECK(r.GetVal(5,5,5) == 0); // Negative numbers should be zeroed out
 }
 
 TEST_CASE("Test HCAWorld", "[full_model]") {

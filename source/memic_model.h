@@ -157,6 +157,14 @@ class HCAWorld : public emp::World<Cell> {
       }
   }
 
+  void Reset(MemicConfig & config, bool web = false) {
+    Clear();
+    if (oxygen) {
+      oxygen.Delete();
+    }
+    Setup(config, web);    
+  }
+
   void Setup(MemicConfig & config, bool web = false) {
     InitConfigs(config);
     oxygen.New(WORLD_X, WORLD_Y, WORLD_Z);

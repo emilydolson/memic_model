@@ -132,11 +132,11 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
     button_style.AddClass("btn-primary");
     toggle.SetCSS(button_style);
 
-    // UI::Button draw_cells_toggle([this](){draw_cells = !draw_cells;}, "Toggle drawing cells");
-    // draw_cells_toggle.SetCSS(button_style);
+    UI::Button reset_button([this](){Reset(config, true); RedrawCells(); RedrawOxygen();}, "Reset");
+    reset_button.SetCSS(button_style);
 
     controls << toggle;
-    controls << " " << cell_color_control;
+    controls << " " << reset_button << " " << cell_color_control;
 
     oxygen_display.On("click", [this](int x, int y){OxygenClick(x, y);});;
     RedrawOxygen();

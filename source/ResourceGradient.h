@@ -64,7 +64,6 @@ class ResourceGradient {
     }
 
     void SetNextVal(int x, int y, int z, double val) {
-        std::cout << "Setting " << x << ", " << y << " to " << val << std::endl;
         next_grid[z][y][x] = val;
     }
 
