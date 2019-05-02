@@ -16,8 +16,6 @@ EMP_BUILD_CONFIG( MemicConfig,
   VALUE(PLATE_WIDTH, double, 6.0, "Width of plate in mm"),
   VALUE(PLATE_DEPTH, double, 1.45, "Depth of plate in mm"), 
   VALUE(CELL_DIAMETER, double, 20.0, "Cell length and width in microns"),
-  // VALUE(WORLD_X, int, 100, "Width of world (in number of cells)"),
-  // VALUE(WORLD_Y, int, 100, "Height of world (in number of cells)"),
   VALUE(INIT_POP_SIZE, int, 100, "Number of cells to seed population with"),
 
   GROUP(CELL, "Cell settings"),
@@ -112,9 +110,9 @@ class HCAWorld : public emp::World<Cell> {
     PLATE_DEPTH = config.PLATE_DEPTH();
     CELL_DIAMETER = config.CELL_DIAMETER();
 
-    WORLD_X = floor(PLATE_WIDTH / (CELL_DIAMETER/1000));
-    WORLD_Y = floor(PLATE_LENGTH / (CELL_DIAMETER/1000));
-    WORLD_Z = floor(PLATE_DEPTH / (CELL_DIAMETER/1000));
+    WORLD_X = (int)floor(PLATE_WIDTH / (CELL_DIAMETER/1000));
+    WORLD_Y = (int)floor(PLATE_LENGTH / (CELL_DIAMETER/1000));
+    WORLD_Z = (int)floor(PLATE_DEPTH / (CELL_DIAMETER/1000));
 
     if (oxygen) {
       oxygen->SetDiffusionCoefficient(OXYGEN_DIFFUSION_COEFFICIENT);
@@ -139,11 +137,11 @@ class HCAWorld : public emp::World<Cell> {
     //   InjectAt(Cell(CELL_STATE::HEALTHY), cell_id);
     // }
     pop.resize(WORLD_X*WORLD_Y);
-    int initial_spot = random_ptr->GetUInt(WORLD_Y*WORLD_X);
+    size_t initial_spot = random_ptr->GetUInt(WORLD_Y*WORLD_X);
     InjectAt(Cell(), initial_spot);
 
-    for (int cell_id = 0; cell_id < INIT_POP_SIZE; cell_id++) {
-      int spot = random_ptr->GetUInt(WORLD_Y*WORLD_X);
+    for (size_t cell_id = 0; cell_id < INIT_POP_SIZE; cell_id++) {
+      size_t spot = random_ptr->GetUInt(WORLD_Y*WORLD_X);
       while (spot == initial_spot) {
         spot = random_ptr->GetUInt(WORLD_Y*WORLD_X);        
       }
@@ -154,9 +152,9 @@ class HCAWorld : public emp::World<Cell> {
   }
 
   void InitOxygen() {
-    for (int x = 0; x < WORLD_X; x++) {
-      for (int y = 0; y < WORLD_Y; y++) {
-        for (int z = 0; z < WORLD_Z; z++) {
+    for (size_t x = 0; x < WORLD_X; x++) {
+      for (size_t y = 0; y < WORLD_Y; y++) {
+        for (size_t z = 0; z < WORLD_Z; z++) {
           oxygen->SetVal(x, y, z, INITIAL_OXYGEN_LEVEL);
         }
       }
@@ -265,7 +263,7 @@ class HCAWorld : public emp::World<Cell> {
   }
 
 
-  void Quiesce(int cell_id) {
+  void Quiesce(size_t cell_id) {
     // Quiescence - stick the cell back into the population in
     // the same spot but don't change anything else
     // std::cout << "Quieseing" << std::endl;

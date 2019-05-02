@@ -4,17 +4,17 @@
 #include "base/vector.h"
 
 class ResourceGradient {
-    using grid_t = emp::vector<emp::vector<emp::vector<double>>>; // It might be possible to make these arrays
+    using grid_t = emp::vector<emp::vector<emp::vector<double> > >; // It might be possible to make these arrays
     grid_t curr_grid;
     grid_t next_grid;
     double diffusion_coefficient;
-    int x_len;
-    int y_len;
-    int z_len;
+    size_t x_len;
+    size_t y_len;
+    size_t z_len;
     bool toroidal;
 
     public:
-    ResourceGradient(int x_len_in, int y_len_in=1, int z_len_in=1) :
+    ResourceGradient(size_t x_len_in, size_t y_len_in=1, size_t z_len_in=1) :
         diffusion_coefficient(0),
         x_len(x_len_in), y_len(y_len_in), z_len(z_len_in),
         toroidal(false) {
@@ -22,13 +22,13 @@ class ResourceGradient {
         curr_grid.resize(z_len);
         next_grid.resize(z_len);
 
-        for (int z = 0; z < z_len; z++) {
+        for (size_t z = 0; z < z_len; z++) {
             curr_grid[z].resize(y_len);
             next_grid[z].resize(y_len);
-            for (int y = 0; y < y_len; y++) {
+            for (size_t y = 0; y < y_len; y++) {
                 curr_grid[z][y].resize(x_len);
                 next_grid[z][y].resize(x_len);
-                for (int x = 0; x < x_len; x++) {
+                for (size_t x = 0; x < x_len; x++) {
                     curr_grid[z][y][x] = 0;
                     next_grid[z][y][x] = 0;
                 }
@@ -44,13 +44,13 @@ class ResourceGradient {
         curr_grid.resize(z_len);
         next_grid.resize(z_len);
 
-        for (int z = 0; z < z_len; z++) {
+        for (size_t z = 0; z < z_len; z++) {
             curr_grid[z].resize(y_len);
             next_grid[z].resize(y_len);
-            for (int y = 0; y < y_len; y++) {
+            for (size_t y = 0; y < y_len; y++) {
                 curr_grid[z][y].resize(x_len);
                 next_grid[z][y].resize(x_len);
-                for (int x = 0; x < x_len; x++) {
+                for (size_t x = 0; x < x_len; x++) {
                     curr_grid[z][y][x] = g[z][y][x];
                     next_grid[z][y][x] = 0;
                 }
@@ -59,27 +59,27 @@ class ResourceGradient {
  
     }
 
-    void SetVal(int x, int y, int z, double val) {
+    void SetVal(size_t x, size_t y, size_t z, double val) {
         curr_grid[z][y][x] = val;
     }
 
-    void SetNextVal(int x, int y, int z, double val) {
+    void SetNextVal(size_t x, size_t y, size_t z, double val) {
         next_grid[z][y][x] = val;
     }
 
-    void DecVal(int x, int y, int z, double val) {
+    void DecVal(size_t x, size_t y, size_t z, double val) {
         curr_grid[z][y][x] -= val;
     }
 
-    void DecNextVal(int x, int y, int z, double val) {
+    void DecNextVal(size_t x, size_t y, size_t z, double val) {
         next_grid[z][y][x] -= val;
     }
 
-    double GetVal(int x, int y, int z=0) const {
+    double GetVal(size_t x, size_t y, size_t z=0) const {
         return curr_grid[z][y][x];
     } 
 
-    double GetNextVal(int x, int y, int z = 0) const {
+    double GetNextVal(size_t x, size_t y, size_t z = 0) const {
         return next_grid[z][y][x];
     } 
 
@@ -97,9 +97,9 @@ class ResourceGradient {
 
     void Update() {
         std::swap(curr_grid, next_grid);
-        for (int z = 0; z < z_len; z++) {
-            for (int y = 0; y < y_len; y++) {
-                for (int x = 0; x < x_len; x++) {
+        for (size_t z = 0; z < z_len; z++) {
+            for (size_t y = 0; y < y_len; y++) {
+                for (size_t x = 0; x < x_len; x++) {
                     // zero out new next grid
                     next_grid[z][y][x] = 0;
 
@@ -113,7 +113,7 @@ class ResourceGradient {
         }        
     }
 
-    double GetNeighborOxygen(int x, int y, int z) {
+    double GetNeighborOxygen(size_t x, size_t y, size_t z) {
         double total = 0;
 
         if (toroidal) {
@@ -230,9 +230,9 @@ class ResourceGradient {
 
     void Diffuse() {
 
-        for (int z = 0; z < z_len; z++) {
-            for (int x = 0; x < x_len; x++) {
-                for (int y = 0; y < y_len; y++) {
+        for (size_t z = 0; z < z_len; z++) {
+            for (size_t x = 0; x < x_len; x++) {
+                for (size_t y = 0; y < y_len; y++) {
                     next_grid[z][y][x] += curr_grid[z][y][x] + 
                             (diffusion_coefficient * 
                             (GetNeighborOxygen(x, y, z) - 
