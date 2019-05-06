@@ -231,7 +231,6 @@ TEST_CASE("Test updating gradient", "[oxygen_gradient]") {
 }
 
 TEST_CASE("Test HCAWorld", "[full_model]") {
-
     // Test destructor
     emp::Ptr<HCAWorld> world_ptr;
     emp::Random r;
@@ -252,7 +251,6 @@ TEST_CASE("Test HCAWorld", "[full_model]") {
 
     for (size_t cell_id = 0; cell_id < world.GetSize(); cell_id++) {
         if (world.IsOccupied(cell_id)) {
-
             int age = world.GetOrg(cell_id).age;
             CHECK(!world.IsOccupied(emp::WorldPosition(cell_id, 1)));
             world.Quiesce(cell_id);

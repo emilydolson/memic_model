@@ -226,7 +226,6 @@ class ResourceGradient {
     }
 
     void Diffuse() {
-
         for (size_t z = 0; z < z_len; z++) {
             for (size_t x = 0; x < x_len; x++) {
                 for (size_t y = 0; y < y_len; y++) {

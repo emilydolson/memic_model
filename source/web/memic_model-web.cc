@@ -170,9 +170,7 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
       if (draw_cells) {
         RedrawCells();
       }
-
     }
-
   }
 
   void RedrawOxygen() {
@@ -254,11 +252,9 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
     }
 
     cell_display.Activate();
-
   }
 
-  void OxygenClick(int x, int y) {
-    
+  void OxygenClick(int x, int y) { 
     // std::cout << "x: " << in_x << " y: " << in_y  <<std::endl;
     // double x = canvas.GetAdjustedX(in_x);
     // double y = canvas.GetAdjustedY(in_y);
@@ -275,7 +271,6 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
     oxygen->SetNextVal(pos_x, pos_y, 0, 1);
     oxygen->SetVal(pos_x, pos_y, 0, 1);
   }
-
 };
 
 

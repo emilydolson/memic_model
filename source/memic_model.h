@@ -221,7 +221,6 @@ class HCAWorld : public emp::World<Cell> {
   /// Determine if cell can divide (i.e. is space available). If yes, return
   /// id of cell that it can divide into. If not, return -1.
   int CanDivide(size_t cell_id) {
-
     emp::vector<int> open_spots;
     int x_coord = (int)(cell_id % WORLD_X);
     int y_coord = (int)(cell_id / WORLD_X);
@@ -271,7 +270,6 @@ class HCAWorld : public emp::World<Cell> {
   }
 
   void RunStep() {
-
     std::cout << update << std::endl;
 
     for (size_t cell_id = 0; cell_id < WORLD_X * WORLD_Y; cell_id++) {
@@ -328,7 +326,6 @@ class HCAWorld : public emp::World<Cell> {
       } else {        
         Quiesce(cell_id);
       }
-
     }
 
     Update();
@@ -339,7 +336,6 @@ class HCAWorld : public emp::World<Cell> {
           RunStep();
       }  
   }
-
 };
 
 #endif
