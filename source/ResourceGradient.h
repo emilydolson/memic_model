@@ -18,7 +18,6 @@ class ResourceGradient {
         diffusion_coefficient(0),
         x_len(x_len_in), y_len(y_len_in), z_len(z_len_in),
         toroidal(false) {
-
         curr_grid.resize(z_len);
         next_grid.resize(z_len);
 
@@ -56,7 +55,6 @@ class ResourceGradient {
                 }
             }
         }
- 
     }
 
     void SetVal(size_t x, size_t y, size_t z, double val) {
@@ -222,7 +220,6 @@ class ResourceGradient {
             } else {
                 total += curr_grid[z+1][y][x];
             }
-
         }
 
         return total;
@@ -241,8 +238,6 @@ class ResourceGradient {
             }
         }
     }
-
-
 };
 
 #endif

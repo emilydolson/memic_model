@@ -180,8 +180,8 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
     oxygen_display.Freeze();
     oxygen_display.Clear("black");
 
-    for (int x = 0; x < WORLD_X; x++) {
-      for (int y = 0; y < WORLD_Y; y++) {
+    for (size_t x = 0; x < WORLD_X; x++) {
+      for (size_t y = 0; y < WORLD_Y; y++) {
         double o2 = oxygen->GetVal(x,y);
 
         o2 *= 360;
@@ -200,8 +200,8 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
     oxygen_vertical_display.Freeze();
     oxygen_vertical_display.Clear("black");
 
-    for (int z = 0; z < WORLD_Z; z++) {
-      for (int y = 0; y < WORLD_Y; y++) {
+    for (size_t z = 0; z < WORLD_Z; z++) {
+      for (size_t y = 0; y < WORLD_Y; y++) {
         double o2 = oxygen->GetVal(WORLD_X/2,y,z);
 
         o2 *= 360;
@@ -222,9 +222,9 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
     cell_display.Freeze();
     cell_display.Clear("black");
 
-    for (int x = 0; x < WORLD_X; x++) {
-      for (int y = 0; y < WORLD_Y; y++) {
-        int cell_id = x + y * WORLD_X;
+    for (size_t x = 0; x < WORLD_X; x++) {
+      for (size_t y = 0; y < WORLD_Y; y++) {
+        size_t cell_id = x + y * WORLD_X;
         if (IsOccupied(cell_id)) {
           // auto taxon = systematics[0].DynamicCast<emp::Systematics<Cell, int>>()->GetTaxonAt(cell_id);
           // double depth = taxon->GetDepth();

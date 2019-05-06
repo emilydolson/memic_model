@@ -3,9 +3,9 @@
 #include "../source/ResourceGradient.h"
 #include "../source/memic_model.h"
 
-static int y_len = 50;
-static int x_len = 100;
-static int z_len = 1;
+static size_t y_len = 50;
+static size_t x_len = 100;
+static size_t z_len = 1;
 MemicConfig config;
 HCAWorld world;
 
@@ -13,9 +13,9 @@ TEST_CASE("Test constructor", "[oxygen_gradient]") {
     ResourceGradient r(x_len, y_len, z_len);
     
     // Make sure r got constructed correctly
-    for (int y = 0; y < y_len; y++) {
-        for (int x = 0; x < x_len; x++) {
-            for (int z = 0; z < z_len; z++) {
+    for (size_t y = 0; y < y_len; y++) {
+        for (size_t x = 0; x < x_len; x++) {
+            for (size_t z = 0; z < z_len; z++) {
                 CHECK(r.GetVal(x, y,z) == 0);
             }
         }
@@ -23,27 +23,26 @@ TEST_CASE("Test constructor", "[oxygen_gradient]") {
 
     // Test constructing from grid
     emp::vector<emp::vector<emp::vector<double> > > grid;
-    int grid_y = 5;
-    int grid_x = 3;
-    int grid_z = 1;
+    size_t grid_y = 5;
+    size_t grid_x = 3;
+    size_t grid_z = 1;
     grid.resize(grid_z);
-    for (int z = 0; z < grid_z; z++) {
+    for (size_t z = 0; z < grid_z; z++) {
         grid[z].resize(grid_y);
-        for (int y = 0; y < grid_y; y++) {
+        for (size_t y = 0; y < grid_y; y++) {
             grid[z][y].resize(grid_x);
-            for (int x = 0; x < grid_x; x++) {
+            for (size_t x = 0; x < grid_x; x++) {
                 grid[z][y][x] = x*x+y;
             }
         }
     }
 
     ResourceGradient r2(grid);
-    for (int y = 0; y < grid_y; y++) {
-        for (int x = 0; x < grid_x; x++) {
+    for (size_t y = 0; y < grid_y; y++) {
+        for (size_t x = 0; x < grid_x; x++) {
             CHECK(r2.GetVal(x, y, 0) == x*x+y);
         }
     }
-
 }
 
 TEST_CASE("Test standard diffusion", "[oxygen_gradient]") {
@@ -53,8 +52,8 @@ TEST_CASE("Test standard diffusion", "[oxygen_gradient]") {
     // after diffusion happens
     r.SetDiffusionCoefficient(.01);
     r.Diffuse();
-    for (int y = 0; y < y_len; y++) {
-        for (int x = 0; x < x_len; x++) {
+    for (size_t y = 0; y < y_len; y++) {
+        for (size_t x = 0; x < x_len; x++) {
             CHECK(r.GetVal(x, y, 0) == 0);
             CHECK(r.GetNeighborOxygen(x,y, 0) == 0);
         }
@@ -89,7 +88,6 @@ TEST_CASE("Test standard diffusion", "[oxygen_gradient]") {
     CHECK(Approx(r.GetNextVal(99,49,0)) == 0);
     CHECK(Approx(r.GetNextVal(99,0,0)) == 0);
     CHECK(Approx(r.GetNextVal(0,49,0)) == 0);
-
 }
 
 TEST_CASE("Test turning off diffusion", "[oxygen_gradient]") {
@@ -99,8 +97,8 @@ TEST_CASE("Test turning off diffusion", "[oxygen_gradient]") {
     // after diffusion happens
     r.SetDiffusionCoefficient(0);
     r.Diffuse();
-    for (int y = 0; y < y_len; y++) {
-        for (int x = 0; x < x_len; x++) {
+    for (size_t y = 0; y < y_len; y++) {
+        for (size_t x = 0; x < x_len; x++) {
             CHECK(Approx(r.GetVal(x, y, 0)) == 0);
             CHECK(Approx(r.GetNeighborOxygen(x,y,0)) == 0);
         }
@@ -133,7 +131,6 @@ TEST_CASE("Test turning off diffusion", "[oxygen_gradient]") {
     CHECK(Approx(r.GetNextVal(99,49,0)) == 0);
     CHECK(Approx(r.GetNextVal(99,0,0)) == 0);
     CHECK(Approx(r.GetNextVal(0,49,0)) == 0);
-
 }
 
 TEST_CASE("Test toroidal diffusion", "[oxygen_gradient]") {
@@ -144,8 +141,8 @@ TEST_CASE("Test toroidal diffusion", "[oxygen_gradient]") {
     r.SetDiffusionCoefficient(.01);
     r.SetToroidal(true);
     r.Diffuse();
-    for (int y = 0; y < y_len; y++) {
-        for (int x = 0; x < x_len; x++) {
+    for (size_t y = 0; y < y_len; y++) {
+        for (size_t x = 0; x < x_len; x++) {
             CHECK(Approx(r.GetVal(x, y,0)) == 0);
             CHECK(Approx(r.GetNeighborOxygen(x,y,0)) == 0);
         }
@@ -180,7 +177,6 @@ TEST_CASE("Test toroidal diffusion", "[oxygen_gradient]") {
     CHECK(Approx(r.GetNextVal(99,49,0)) == 0);
     CHECK(Approx(r.GetNextVal(99,0,0)) == 0.01);
     CHECK(Approx(r.GetNextVal(0,49,0)) == 0.01);
-
 }
 
 TEST_CASE("Test Z axis", "[oxygen_gradient]") {
@@ -207,7 +203,6 @@ TEST_CASE("Test Z axis", "[oxygen_gradient]") {
     CHECK(Approx(r.GetNeighborOxygen(1,3,3)) == 2);
     CHECK(Approx(r.GetNeighborOxygen(2,2,3)) == 2);
     CHECK(Approx(r.GetNeighborOxygen(0,2,3)) == 2);
-
 }
 
 TEST_CASE("Test updating gradient", "[oxygen_gradient]") {
@@ -296,5 +291,4 @@ TEST_CASE("Test HCAWorld", "[full_model]") {
     world.InitConfigs(config);
     CHECK(world.GetOxygen().GetDiffusionCoefficient() == Approx(.09));
     world.Run();
-
 }

@@ -5,7 +5,6 @@
 #include "config/ArgManager.h"
 #include "Evolve/World.h"
 
-
 // Default values for plate dimensions are extracted from MEMIC plate stl 
 
 EMP_BUILD_CONFIG( MemicConfig,
@@ -71,14 +70,13 @@ class HCAWorld : public emp::World<Cell> {
   double PLATE_DEPTH;
   double CELL_DIAMETER;
 
-  int WORLD_X;
-  int WORLD_Y;
-  int WORLD_Z;
+  size_t WORLD_X;
+  size_t WORLD_Y;
+  size_t WORLD_Z;
 
   int next_clade = 1;
 
   public:
-
   emp::Ptr<ResourceGradient> oxygen;
 
   HCAWorld(emp::Random & r) : emp::World<Cell>(r), oxygen(nullptr) {;}
@@ -110,24 +108,24 @@ class HCAWorld : public emp::World<Cell> {
     PLATE_DEPTH = config.PLATE_DEPTH();
     CELL_DIAMETER = config.CELL_DIAMETER();
 
-    WORLD_X = (int)floor(PLATE_WIDTH / (CELL_DIAMETER/1000));
-    WORLD_Y = (int)floor(PLATE_LENGTH / (CELL_DIAMETER/1000));
-    WORLD_Z = (int)floor(PLATE_DEPTH / (CELL_DIAMETER/1000));
+    WORLD_X = (size_t)floor(PLATE_WIDTH / (CELL_DIAMETER/1000));
+    WORLD_Y = (size_t)floor(PLATE_LENGTH / (CELL_DIAMETER/1000));
+    WORLD_Z = (size_t)floor(PLATE_DEPTH / (CELL_DIAMETER/1000));
 
     if (oxygen) {
       oxygen->SetDiffusionCoefficient(OXYGEN_DIFFUSION_COEFFICIENT);
     }
   }
 
-  int GetWorldX() {
+  size_t GetWorldX() {
     return WORLD_X;
   }
 
-  int GetWorldY() {
+  size_t GetWorldY() {
     return WORLD_Y;
   }
 
-  int GetWorldZ() {
+  size_t GetWorldZ() {
     return WORLD_Z;
   }
 
@@ -140,7 +138,7 @@ class HCAWorld : public emp::World<Cell> {
     size_t initial_spot = random_ptr->GetUInt(WORLD_Y*WORLD_X);
     InjectAt(Cell(), initial_spot);
 
-    for (size_t cell_id = 0; cell_id < INIT_POP_SIZE; cell_id++) {
+    for (size_t cell_id = 0; cell_id < (size_t)INIT_POP_SIZE; cell_id++) {
       size_t spot = random_ptr->GetUInt(WORLD_Y*WORLD_X);
       while (spot == initial_spot) {
         spot = random_ptr->GetUInt(WORLD_Y*WORLD_X);        
@@ -171,7 +169,7 @@ class HCAWorld : public emp::World<Cell> {
       oxygen->Update();
 
       // Oxygen inflow along edge
-      for (int x = 0; x < WORLD_X; x++) {
+      for (size_t x = 0; x < WORLD_X; x++) {
         oxygen->SetVal(x, 0, WORLD_Z-1, 1);
       }
   }
@@ -208,10 +206,10 @@ class HCAWorld : public emp::World<Cell> {
   }
 
   void BasalOxygenConsumption() {
-    for (int cell_id = 0; cell_id < (int)pop.size(); cell_id++) {
+    for (size_t cell_id = 0; cell_id < pop.size(); cell_id++) {
       if (IsOccupied(cell_id)) {
-        int x = cell_id % WORLD_X;
-        int y = cell_id / WORLD_X;
+        size_t x = cell_id % WORLD_X;
+        size_t y = cell_id / WORLD_X;
         double oxygen_loss_multiplier = oxygen->GetVal(x, y, 0);
         oxygen_loss_multiplier /= oxygen_loss_multiplier + KM;
         oxygen->DecNextVal(x, y, 0, BASAL_OXYGEN_CONSUMPTION * oxygen_loss_multiplier);
@@ -222,20 +220,20 @@ class HCAWorld : public emp::World<Cell> {
 
   /// Determine if cell can divide (i.e. is space available). If yes, return
   /// id of cell that it can divide into. If not, return -1.
-  int CanDivide(int cell_id) {
+  int CanDivide(size_t cell_id) {
 
     emp::vector<int> open_spots;
-    int x_coord = (cell_id % WORLD_X);
-    int y_coord = (cell_id / WORLD_X);
+    int x_coord = (int)(cell_id % WORLD_X);
+    int y_coord = (int)(cell_id / WORLD_X);
     
     // Iterate over 9-cell neighborhood. Currently checks focal cell uneccesarily,
     // but that shouldn't cause problems because it will never show up as invasible.
-    for (int x = std::max(0, x_coord-1); x < std::min(WORLD_X, x_coord + 2); x++) {
-      for (int y = std::max(0, y_coord-1); y < std::min(WORLD_Y, y_coord + 2); y++) {
-        int this_cell = y*WORLD_X + x;
+    for (int x = std::max(0, x_coord-1); x < std::min((int)WORLD_X, x_coord + 2); x++) {
+      for (int y = std::max(0, y_coord-1); y < std::min((int)WORLD_Y, y_coord + 2); y++) {
+        int this_cell = y*(int)WORLD_X + x;
         // Cells can be divided into if they are empty or if they are healthy and the
         // dividing cell is cancerous
-        if (!IsOccupied(this_cell)) {
+        if (!IsOccupied((size_t)this_cell)) {
           open_spots.push_back(this_cell);
         }
       }
@@ -276,15 +274,14 @@ class HCAWorld : public emp::World<Cell> {
 
     std::cout << update << std::endl;
 
-    for (int cell_id = 0; cell_id < WORLD_X * WORLD_Y; cell_id++) {
-
+    for (size_t cell_id = 0; cell_id < WORLD_X * WORLD_Y; cell_id++) {
       if (!IsOccupied(cell_id)) {
         // Don't need to do anything for dead/empty cells
         continue;
       }
 
-      int x = cell_id % WORLD_X;
-      int y = cell_id / WORLD_X;
+      size_t x = cell_id % WORLD_X;
+      size_t y = cell_id / WORLD_X;
 
       // Query oxygen to test for hypoxia
       if (oxygen->GetVal(x, y, 0) < OXYGEN_THRESHOLD) {
@@ -319,7 +316,7 @@ class HCAWorld : public emp::World<Cell> {
         emp::Ptr<Cell> offspring = emp::NewPtr<Cell>(*pop[cell_id]);
         Mutate(offspring);
         offspring_ready_sig.Trigger(*offspring, cell_id);
-        AddOrgAt(offspring, emp::WorldPosition(potential_offspring_cell, 1), cell_id);
+        AddOrgAt(offspring, emp::WorldPosition((size_t)potential_offspring_cell, 1), cell_id);
 
         // Handle daughter cell in current location
         before_repro_sig.Trigger(cell_id);
@@ -344,8 +341,5 @@ class HCAWorld : public emp::World<Cell> {
   }
 
 };
-
-
-
 
 #endif
