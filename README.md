@@ -5,25 +5,25 @@ Model of cancer growth under spatially heterogeneous oxygen
 
 ## Dependencies
 
-- [Empirical](https://github.com/emilydolson/Empirical/tree/memic_model): Specifically the memic_model branch of my fork (will integrate into upstream master eventually). This is the core framework the model is built on.
-- [Bootstrap](https://getbootstrap.com/): Web framework that the site is built on (takes care of responsiveness for compatability with various devices)
-- [Bootstrap-select](https://developer.snapappointments.com/bootstrap-select/): For styling the drop-down menu.
+  - [Empirical](https://github.com/emilydolson/Empirical/tree/memic_model): Specifically the memic_model branch of my fork (will integrate into upstream master eventually). This is the core framework the model is built on.
+  - [Bootstrap](https://getbootstrap.com/): Web framework that the site is built on (takes care of responsiveness for compatability with various devices)
+  - [Bootstrap-select](https://developer.snapappointments.com/bootstrap-select/): For styling the drop-down menu.
 
-## Tentative specs:
+## Tentative specs
 
 *Definitely necessary*
-- Population of cells
-- Cells can be in different states
-- Cells can reproduce (sometimes with mutations)
-- Environmental conditions vary over space
-- Environmental conditions vary over time (based on diffusion equations?)
-- Environmental conditions can affect cell reproduction, death, and behavior
-- Ability to eventually simulate applying treatments
+  - Population of cells
+  - Cells can be in different states
+  - Cells can reproduce (sometimes with mutations)
+  - Environmental conditions vary over space
+  - Environmental conditions vary over time (based on diffusion equations?)
+  - Environmental conditions can affect cell reproduction, death, and behavior
+  - Ability to eventually simulate applying treatments
 
 *Possibly necessary*
-- Complex topology: 3D, free-moving cells (i.e. continuous x,y coordinates rather than lattice), something else?
-- Variation in cell proliferation ability
-- Cell movement (preferential based on environment?)
-- Non-neutral mutations (and possibly mutations with differential effects based on environment)
-- Phenotypic plasticity
-- Physics
+  - Complex topology: 3D, free-moving cells (i.e. continuous x,y coordinates rather than lattice), something else?
+  - Variation in cell proliferation ability
+  - Cell movement (preferential based on environment?)
+  - Non-neutral mutations (and possibly mutations with differential effects based on environment)
+  - Phenotypic plasticity
+  - Physics
