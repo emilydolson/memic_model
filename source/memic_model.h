@@ -16,6 +16,7 @@ EMP_BUILD_CONFIG( MemicConfig,
   VALUE(PLATE_DEPTH, double, 1.45, "Depth of plate in mm"), 
   VALUE(CELL_DIAMETER, double, 20.0, "Cell length and width in microns"),
   VALUE(INIT_POP_SIZE, int, 100, "Number of cells to seed population with"),
+  VALUE(DATA_RESOLUTION, int, 10, "How many updates between printing data?"),
 
   GROUP(CELL, "Cell settings"),
   VALUE(NEUTRAL_MUTATION_RATE, double, .05, "Probability of a neutral mutation (only relevant for phylogenetic signature)"),
@@ -75,6 +76,8 @@ class HCAWorld : public emp::World<Cell> {
   size_t WORLD_Z;
 
   int next_clade = 1;
+
+  emp::vector<emp::vector<double>> densities;
 
   public:
   emp::Ptr<ResourceGradient> oxygen;
@@ -200,9 +203,29 @@ class HCAWorld : public emp::World<Cell> {
     sys.New([](const Cell & c){return c.clade;});
     AddSystematics(sys);
 
+    // SetupFitnessFile().SetTimingRepeat(config.DATA_RESOLUTION());
+    SetupSystematicsFile().SetTimingRepeat(config.DATA_RESOLUTION());
+    SetupPopulationFile().SetTimingRepeat(config.DATA_RESOLUTION());
+
+    emp::DataFile & phylodiversity_file = SetupFile("phylodiversity.csv");
+    sys->AddEvolutionaryDistinctivenessDataNode();
+    sys->AddPairwiseDistanceDataNode();
+    sys->AddPhylogeneticDiversityDataNode();
+
+    phylodiversity_file.AddVar(update, "generation", "Generation");
+    phylodiversity_file.AddStats(*sys->GetDataNode("evolutionary_distinctiveness") , "evolutionary_distinctiveness", "evolutionary distinctiveness for a single update", true, true);
+    phylodiversity_file.AddStats(*sys->GetDataNode("pairwise_distance"), "pairwise_distance", "pairwise distance for a single update", true, true);
+    phylodiversity_file.AddCurrent(*sys->GetDataNode("phylogenetic_diversity"), "current_phylogenetic_diversity", "current phylogenetic diversity", true, true);
+    phylodiversity_file.PrintHeaderKeys();
+    phylodiversity_file.SetTimingRepeat(config.DATA_RESOLUTION());
+
+    // emp::DataFile & phylodiversity_file = SetupFile("phylodiversity.csv");
+
     SetPopStruct_Grid(WORLD_X, WORLD_Y, true);
     InitOxygen();
     InitPop();
+
+    SetSynchronousSystematics(true);
   }
 
   void BasalOxygenConsumption() {
@@ -334,7 +357,8 @@ class HCAWorld : public emp::World<Cell> {
   void Run() {
       for (int u = 0; u <= TIME_STEPS; u++) {
           RunStep();
-      }  
+      }
+      systematics[0].DynamicCast<emp::Systematics<Cell, int>>()->Snapshot("memic_phylo.csv");  
   }
 };
 

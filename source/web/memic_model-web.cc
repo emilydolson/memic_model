@@ -6,6 +6,7 @@
 #include "web/color_map.h"
 #include "../memic_model.h"
 #include "config/config_web_interface.h"
+#include "tools/spatial_stats.h"
 
 namespace UI = emp::web;
 
@@ -156,6 +157,7 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
     config_ui.ExcludeConfig("ASYMMETRIC_DIVISION_PROB");
     config_ui.ExcludeConfig("WORLD_X");
     config_ui.ExcludeConfig("WORLD_Y");
+    config_ui.ExcludeConfig("DATA_RESOLUTION");
     config_ui.Setup();
     controls << config_ui.GetDiv();
   }

@@ -251,6 +251,7 @@ TEST_CASE("Test HCAWorld", "[full_model]") {
 
     for (size_t cell_id = 0; cell_id < world.GetSize(); cell_id++) {
         if (world.IsOccupied(cell_id)) {
+            std::cout << cell_id << " is occupied" << std::endl;
             int age = world.GetOrg(cell_id).age;
             CHECK(!world.IsOccupied(emp::WorldPosition(cell_id, 1)));
             world.Quiesce(cell_id);
@@ -276,10 +277,10 @@ TEST_CASE("Test HCAWorld", "[full_model]") {
         }
     }
 
-    // world.Clear();
-    // world.InjectAt(Cell(), 0);
+    world.Clear();
+    world.InjectAt(Cell(), 0);
 
-    // world.GetOxygen().SetVal(0,0,0,0);
+    world.GetOxygen().SetVal(0,0,0,0);
     world.RunStep();
     std::cout << world.IsOccupied(0) << " " << world.GetOrg(0).hif1alpha << std::endl;
     CHECK((!world.IsOccupied(0) || Approx(world.GetOrg(0).hif1alpha) == 1));
