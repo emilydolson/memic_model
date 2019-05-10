@@ -15,6 +15,7 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
   // friend class UI::Animate;
 
   using color_fun_t = std::function<std::string(int)>;
+  using should_draw_fun_t = std::function<bool(int)>;
 
   MemicConfig config;
   emp::ConfigWebUI config_ui;
@@ -72,6 +73,21 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
                                         return emp::ColorHSL(hue,50,50);
                                      };
 
+  color_fun_t density_color_fun = [this](int cell_id) {
+                                        double hue = densities[cell_id / WORLD_X][cell_id % WORLD_X] * 280.0;
+                                        return emp::ColorHSL(hue,50,50);
+                                     };
+
+  color_fun_t shannon_entropy_color_fun = [this](int cell_id) {
+                                        double hue = diversities[cell_id / WORLD_X][cell_id % WORLD_X]/4.64 * 280.0;
+                                        return emp::ColorHSL(hue,50,50);
+                                     };
+
+
+  should_draw_fun_t should_draw_cell_fun;
+  should_draw_fun_t draw_if_occupied = [this](int cell_id){return IsOccupied(cell_id);};
+  should_draw_fun_t always_draw = [](int cell_id){return true;};
+
   public:
   HCAWebInterface() : config_ui(config), oxygen_area("oxygen_area"), cell_area("cell_area"), controls("control_area"), 
     oxygen_display(100, 100, "oxygen_display"), oxygen_vertical_display(100, 100, "oxygen_vertical_display"), cell_display(100, 100, "cell_display"),
@@ -102,30 +118,53 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
     controls << "<h1 class='text-center'>Controls</h1>";
 
     cell_color_fun = phylo_depth_color_fun;
+    should_draw_cell_fun = draw_if_occupied;
 
     cell_color_control.SetOption("Phylogenetic Depth", 
                                  [this](){
                                      cell_color_fun = phylo_depth_color_fun;
+                                     should_draw_cell_fun = draw_if_occupied;
                                      RedrawCells();
                                  }, 0);
 
     cell_color_control.SetOption("Origin Time", 
                                  [this](){
                                      cell_color_fun = origin_time_color_fun;
+                                     should_draw_cell_fun = draw_if_occupied;
                                      RedrawCells();
                                  }, 2);
 
     cell_color_control.SetOption("Evolutionary Distinctiveness", 
                                  [this](){
                                      cell_color_fun = evolutionary_distinctiveness_color_fun;
+                                     should_draw_cell_fun = draw_if_occupied;
                                      RedrawCells();
                                  }, 3);
 
     cell_color_control.SetOption("Hif1-alpha stain", 
                                  [this](){
                                      cell_color_fun = hif1alpha_color_fun;
+                                     should_draw_cell_fun = draw_if_occupied;
                                      RedrawCells();
                                  }, 1);
+
+    cell_color_control.SetOption("Cell density heat map", 
+                                 [this](){
+                                     densities = emp::GridDensity(*this);
+                                     OnUpdate([this](int ud){densities = emp::GridDensity(*this);});
+                                     cell_color_fun = density_color_fun;
+                                     should_draw_cell_fun = always_draw;
+                                     RedrawCells();
+                                 }, 4);
+
+    cell_color_control.SetOption("Shannon diversity heat map", 
+                                 [this](){
+                                     diversities = emp::GridShannonEntropy(*this);
+                                     OnUpdate([this](int ud){diversities = emp::GridShannonEntropy(*this);});
+                                     cell_color_fun = shannon_entropy_color_fun;
+                                     should_draw_cell_fun = always_draw;
+                                     RedrawCells();
+                                 }, 5);
 
 
     toggle = GetToggleButton("but_toggle");
@@ -225,7 +264,7 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
     for (size_t x = 0; x < WORLD_X; x++) {
       for (size_t y = 0; y < WORLD_Y; y++) {
         size_t cell_id = x + y * WORLD_X;
-        if (IsOccupied(cell_id)) {
+        if (should_draw_cell_fun(cell_id)) {
           // auto taxon = systematics[0].DynamicCast<emp::Systematics<Cell, int>>()->GetTaxonAt(cell_id);
           // double depth = taxon->GetDepth();
           // double depth_hue = depth * 280.0/systematics[0]->GetMaxDepth();

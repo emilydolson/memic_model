@@ -47,6 +47,11 @@ struct Cell {
     bool operator== (const Cell & other) const {
       return age == other.age && clade == other.clade;
     }
+
+    bool operator< (const Cell & other) const {
+      return clade < other.clade;
+    }
+
 };
 
 class HCAWorld : public emp::World<Cell> {
@@ -78,6 +83,7 @@ class HCAWorld : public emp::World<Cell> {
   int next_clade = 1;
 
   emp::vector<emp::vector<double>> densities;
+  emp::vector<emp::vector<double>> diversities;
 
   public:
   emp::Ptr<ResourceGradient> oxygen;
