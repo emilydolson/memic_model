@@ -39,3 +39,5 @@ default.prof*
 fix_coverage.py
 force_cover
 coverage.txt
+*.csv
+*.out
