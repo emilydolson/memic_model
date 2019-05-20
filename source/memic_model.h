@@ -294,8 +294,10 @@ class HCAWorld : public emp::World<Cell> {
     // the same spot but don't change anything else
     // std::cout << "Quieseing" << std::endl;
     pop[cell_id]->age++;
-    emp::Ptr<Cell> cell = emp::NewPtr<Cell>(*pop[cell_id]);
-    AddOrgAt(cell, emp::WorldPosition(cell_id,1), cell_id);
+    if (pop[cell_id]->age < AGE_LIMIT) {
+      emp::Ptr<Cell> cell = emp::NewPtr<Cell>(*pop[cell_id]);
+      AddOrgAt(cell, emp::WorldPosition(cell_id,1), cell_id);      
+    }
   }
 
   void RunStep() {

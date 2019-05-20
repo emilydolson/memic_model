@@ -26,6 +26,7 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
   UI::Document oxygen_area;
   UI::Document cell_area;
   UI::Document controls;
+  UI::Document stats_area;
   UI::Canvas oxygen_display;
   UI::Canvas oxygen_vertical_display;
   UI::Canvas cell_display;
@@ -89,7 +90,7 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
   should_draw_fun_t always_draw = [](int cell_id){return true;};
 
   public:
-  HCAWebInterface() : config_ui(config), oxygen_area("oxygen_area"), cell_area("cell_area"), controls("control_area"), 
+  HCAWebInterface() : config_ui(config), oxygen_area("oxygen_area"), cell_area("cell_area"), controls("control_area"), stats_area("stats_area"),
     oxygen_display(100, 100, "oxygen_display"), oxygen_vertical_display(100, 100, "oxygen_vertical_display"), cell_display(100, 100, "cell_display"),
     cell_color_control("cell_color_control")
     // : anim([this](){DoFrame();}, oxygen_display, cell_display) 
@@ -116,6 +117,7 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
     oxygen_area << "<h1 class='text-center'>Oxygen</h1>" << oxygen_vertical_display << " " << oxygen_display ;
     cell_area << "<h1 class='text-center'>Cells</h1>" << cell_display;
     controls << "<h1 class='text-center'>Controls</h1>";
+    stats_area << "<h1 class='text-center'>Statistics</h1>";
 
     cell_color_fun = phylo_depth_color_fun;
     should_draw_cell_fun = draw_if_occupied;
@@ -176,7 +178,7 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
     reset_button.SetCSS(button_style);
 
     controls << toggle;
-    controls << " " << reset_button << " " << cell_color_control;
+    controls << " " << reset_button << " " << cell_color_control << "<br>";
 
     oxygen_display.On("click", [this](int x, int y){OxygenClick(x, y);});;
     RedrawOxygen();
@@ -199,6 +201,15 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
     config_ui.ExcludeConfig("DATA_RESOLUTION");
     config_ui.Setup();
     controls << config_ui.GetDiv();
+
+    stats_area << "<br>Time step: " << emp::web::Live( [this](){ return GetUpdate(); } );
+    stats_area << "<br>Extant taxa: " << emp::web::Live( [this](){ return systematics[0].DynamicCast<emp::Systematics<Cell, int>>()->GetNumActive(); } );
+    stats_area << "<br>Shannon diversity: " << emp::web::Live( [this](){ return systematics[0].DynamicCast<emp::Systematics<Cell, int>>()->CalcDiversity(); } );
+    stats_area << "<br>Sackin Index: " << emp::web::Live( [this](){ return systematics[0].DynamicCast<emp::Systematics<Cell, int>>()->SackinIndex(); } );
+    stats_area << "<br>Colless-Like Index: " << emp::web::Live( [this](){ return systematics[0].DynamicCast<emp::Systematics<Cell, int>>()->CollessLikeIndex(); } );
+    stats_area << "<br>Phylogenetic diversity: " << emp::web::Live( [this](){ return systematics[0].DynamicCast<emp::Systematics<Cell, int>>()->GetPhylogeneticDiversity(); } );
+    stats_area << "<br>Mean pairwise distance: " << emp::web::Live( [this](){ return systematics[0].DynamicCast<emp::Systematics<Cell, int>>()->GetMeanPairwiseDistance(); } );
+    stats_area << "<br>Variance pairwise distance: " << emp::web::Live( [this](){ return systematics[0].DynamicCast<emp::Systematics<Cell, int>>()->GetVariancePairwiseDistance(); } );
   }
 
   void DoFrame() {
@@ -212,6 +223,8 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
         RedrawCells();
       }
     }
+
+    stats_area.Redraw();
   }
 
   void RedrawOxygen() {
@@ -265,29 +278,11 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
       for (size_t y = 0; y < WORLD_Y; y++) {
         size_t cell_id = x + y * WORLD_X;
         if (should_draw_cell_fun(cell_id)) {
-          // auto taxon = systematics[0].DynamicCast<emp::Systematics<Cell, int>>()->GetTaxonAt(cell_id);
-          // double depth = taxon->GetDepth();
-          // double depth_hue = depth * 280.0/systematics[0]->GetMaxDepth();
-          // std::cout << depth_hue << std::endl;
           std::string color = cell_color_fun(cell_id);
 
-          // double clade_hue = pop[cell_id]->clade;
-          // // std::cout << "Coloring: " << clade_hue << " " <<clade_hue/next_clade << std::endl;
-          // clade_hue *= 260.0/next_clade;
-          // std::string color = emp::ColorHSL(clade_hue,50,50);
+
           cell_display.Rect(x*display_cell_size, y*display_cell_size, display_cell_size, display_cell_size, color, color);
- 
-          // switch(GetOrg(cell_id).state) {
-          //   case CELL_STATE::HEALTHY:
-          //     cell_display.Rect(x*display_cell_size, y*display_cell_size, display_cell_size, display_cell_size, "green","green");
-          //     break;
-          //   case CELL_STATE::TUMOR:
-          //     cell_display.Rect(x*display_cell_size, y*display_cell_size, display_cell_size, display_cell_size, "blue", "blue");
-          //     break;
-          //   default:
-          //     std::cout << "INVALID CELL STATE" << std::endl;
-          //     break;
-          // }
+
         }        
       }
     }
