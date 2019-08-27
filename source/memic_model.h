@@ -33,6 +33,12 @@ EMP_BUILD_CONFIG( MemicConfig,
   VALUE(DIFFUSION_STEPS_PER_TIME_STEP, int, 10, "Rate at which diffusion is calculated relative to rest of model"),
   VALUE(OXYGEN_THRESHOLD, double, .1, "How much oxygen do cells need to survive?"),
   VALUE(KM, double, 0.01, "Michaelis-Menten kinetic parameter"),
+
+  GROUP(TREATMENT, "Treatment settings"),
+  VALUE(K_OER, double, 3.28, "Effective OER constant"),  
+  VALUE(OER_MIN, double, 1, "OER min constant"),  
+  VALUE(OER_ALPHA_MAX, double, 1.75, "OER alpha max constant"),  
+  VALUE(OER_BETA_MAX, double, 3.25, "OER alpha (? this is what the paper says but I feel like it's supposed to be beta) max constant"),  
 );
 
 struct Cell {
@@ -40,6 +46,7 @@ struct Cell {
     int age = 0;
     int clade = 0;
     double hif1alpha = 0;
+    bool marked_for_death = false;
 
     Cell(double in_stemness = 0) : 
       stemness(in_stemness) {;}
@@ -75,6 +82,11 @@ class HCAWorld : public emp::World<Cell> {
   double PLATE_WIDTH;
   double PLATE_DEPTH;
   double CELL_DIAMETER;
+
+  double K_OER;
+  double OER_MIN;
+  double OER_ALPHA_MAX;
+  double OER_BETA_MAX;
 
   size_t WORLD_X;
   size_t WORLD_Y;
@@ -116,6 +128,11 @@ class HCAWorld : public emp::World<Cell> {
     PLATE_WIDTH = config.PLATE_WIDTH();
     PLATE_DEPTH = config.PLATE_DEPTH();
     CELL_DIAMETER = config.CELL_DIAMETER();
+
+    K_OER = config.K_OER();
+    OER_MIN = config.OER_MIN();
+    OER_ALPHA_MAX = config.OER_ALPHA_MAX();
+    OER_BETA_MAX = config.OER_BETA_MAX();
 
     WORLD_X = (size_t)floor(PLATE_WIDTH / (CELL_DIAMETER/1000));
     WORLD_Y = (size_t)floor(PLATE_LENGTH / (CELL_DIAMETER/1000));
@@ -368,6 +385,30 @@ class HCAWorld : public emp::World<Cell> {
       }
       systematics[0].DynamicCast<emp::Systematics<Cell, int>>()->Snapshot("memic_phylo.csv");  
   }
+
+  /* n is the number of doses of radiation, d dose size in Gy*/
+  void ApplyRadiation(double n, double d) {
+    for (size_t cell_id = 0; cell_id < WORLD_X * WORLD_Y; cell_id++) {
+      if (!IsOccupied(cell_id)) {
+        // Don't need to do anything for dead/empty cells
+        continue;
+      }
+
+      size_t x = cell_id % WORLD_X;
+      size_t y = cell_id / WORLD_X;
+      double c = oxygen->GetVal(x, y, 0);
+
+      double alpha = OER_ALPHA_MAX/((((OER_ALPHA_MAX - OER_MIN)*K_OER)/(c + K_OER)) + OER_MIN);
+      double beta = OER_BETA_MAX/((((OER_BETA_MAX - OER_MIN)*K_OER)/(c + K_OER)) + OER_MIN);
+
+      if (random_ptr->P(exp(-n*(alpha*d + beta*emp::Pow(d,2))))) {
+        // TODO: Figure out best way to kill cells
+        pop[cell_id]->marked_for_death = true;
+      }
+
+    }
+  }
+
 };
 
 #endif
