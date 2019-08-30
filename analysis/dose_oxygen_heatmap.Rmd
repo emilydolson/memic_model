@@ -1,0 +1,24 @@
+
+```{r}
+library(ggplot2)
+```
+
+```{r}
+
+surviving_fraction <- function(c, d) {
+  
+  k_oer <- 3.28
+  oer_min <- 1
+  oer_alpha_max <- 1.75
+  oer_beta_max <- 3.25
+  
+  alpha <- oer_alpha_max/((((oer_alpha_max - oer_min)*k_oer)/(c + k_oer)) + oer_min);
+  beta <- oer_beta_max/((((oer_beta_max - oer_min)*k_oer)/(c + k_oer)) + oer_min);
+  
+  return(exp(-n*(alpha*d + beta*emp::Pow(d,2))))
+}  
+```
+
+```{r}
+ggplot() + layer(geom="path", stat="function", fun=surviving_fraction)
+```
