@@ -399,7 +399,7 @@ class HCAWorld : public emp::World<Cell> {
       double c = oxygen->GetVal(x, y, 0);
 
       double alpha = OER_ALPHA_MAX/((((OER_ALPHA_MAX - OER_MIN)*K_OER)/(c + K_OER)) + OER_MIN);
-      double beta = OER_BETA_MAX/((((OER_BETA_MAX - OER_MIN)*K_OER)/(c + K_OER)) + OER_MIN);
+      double beta = OER_BETA_MAX/(((((OER_BETA_MAX - OER_MIN)*K_OER)/(c + K_OER)) + OER_MIN)**2);
 
       if (random_ptr->P(exp(-n*(alpha*d + beta*emp::Pow(d,2))))) {
         // TODO: Figure out best way to kill cells

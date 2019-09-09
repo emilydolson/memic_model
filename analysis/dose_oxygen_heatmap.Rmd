@@ -1,24 +1,61 @@
+---
+title: Illustrating effect of oxygen on radiation efficacy
+author: Emily Dolson
+output: html_document
+    toc: true
+    toc_float: true
+---
+
+# Setup
+
+First lets make a function to calculate surviving fraction of cells after a given dose of radiation at a given oxygen concentration.
 
 ```{r}
+# Load necessary libraries
 library(ggplot2)
-```
 
-```{r}
+# Equation relating oxygen concentration, radiation dose size, and number of doses to cell survival from Scott et. al 2016
 
-surviving_fraction <- function(c, d) {
-  
+surviving_fraction <- function(c, d, n) {
+  # c is oxygen concentration, d is dose size, n is number of doses  
+
+  # Constants from Scott et. al 2016
   k_oer <- 3.28
   oer_min <- 1
   oer_alpha_max <- 1.75
   oer_beta_max <- 3.25
   
   alpha <- oer_alpha_max/((((oer_alpha_max - oer_min)*k_oer)/(c + k_oer)) + oer_min);
-  beta <- oer_beta_max/((((oer_beta_max - oer_min)*k_oer)/(c + k_oer)) + oer_min);
+  beta <- oer_beta_max/(((((oer_beta_max - oer_min)*k_oer)/(c + k_oer)) + oer_min)**2);
   
-  return(exp(-n*(alpha*d + beta*emp::Pow(d,2))))
+  return(exp(-n*(alpha*d + beta*(d**2))))
 }  
 ```
 
+# Results
+
+
 ```{r}
-ggplot() + layer(geom="path", stat="function", fun=surviving_fraction)
+# Generate a dataframe containing surviving fraction across range of doses and oxygen levels
+doses <- seq(0,10, .1)
+#oxygen <- seq(0, .000000000000514, .00000000000001)
+oxygen <- seq(0, 10, .1)
+df <- data.frame()
+for (dose in doses) {
+  for (conc in oxygen) {
+    df <- rbind(df, c(dose, conc, surviving_fraction(conc, dose, 1)))
+  }
+}
+
+# Give the columns meaningful names
+colnames(df) <- c("dose", "oxygen", "sf")
+
+# Plot it!
+# log transformation is necessary to see differences across the plot. viridis color map is much more effective than default
+
+breaks <- c(.0000000000000000000000000000000000000000000000000000000000000000000001,.000000000000000000000000000000000000000000000000000000000001,.00000000000000000000000000000000000000000000000001,.0000000000000000000000000000000000000001,.000000000000000000000000000001,.00000000000000000001, .0000000001, .1)
+logticks <- log(ticks)
+
+ggplot(data=df) + geom_raster(aes(x=dose, y=oxygen, fill=sf)) + scale_fill_continuous(type="viridis", trans="log10", breaks = breaks)
+
 ```
