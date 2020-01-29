@@ -98,11 +98,7 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
     SetupInterface();   
   }
 
-  void SetupInterface() {
-    GetRandom().ResetSeed(config.SEED());
-    config.CELL_DIAMETER(200);
-    Setup(config, true);
-
+  void ResizeDisplays() {
     oxygen_area.SetWidth(WORLD_X * display_cell_size + WORLD_Z * display_cell_size + 10);
     oxygen_display.SetSize(WORLD_X * display_cell_size, WORLD_Y * display_cell_size);
     oxygen_display.Clear("black");
@@ -112,7 +108,15 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
 
     cell_area.SetWidth(WORLD_X * display_cell_size);
     cell_display.SetSize(WORLD_X * display_cell_size, WORLD_Y * display_cell_size);
-    cell_display.Clear("black");
+    cell_display.Clear("black");    
+  }
+
+  void SetupInterface() {
+    GetRandom().ResetSeed(config.SEED());
+    config.CELL_DIAMETER(200);
+    Setup(config, true);
+
+    ResizeDisplays();
 
     oxygen_area << "<h1 class='text-center'>Oxygen</h1>" << oxygen_vertical_display << " " << oxygen_display ;
     cell_area << "<h1 class='text-center'>Cells</h1>" << cell_display;
@@ -174,7 +178,7 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
     button_style.AddClass("btn-primary");
     toggle.SetCSS(button_style);
 
-    UI::Button reset_button([this](){Reset(config, true); RedrawCells(); RedrawOxygen();}, "Reset");
+    UI::Button reset_button([this](){Reset(config, true); ResizeDisplays(); RedrawCells(); RedrawOxygen();}, "Reset");
     reset_button.SetCSS(button_style);
 
     controls << toggle;
@@ -203,6 +207,7 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
     controls << config_ui.GetDiv();
 
     stats_area << "<br>Time step: " << emp::web::Live( [this](){ return GetUpdate(); } );
+    stats_area << "<br>Population size: " << emp::web::Live( [this](){ return GetNumOrgs(); } );
     stats_area << "<br>Extant taxa: " << emp::web::Live( [this](){ return systematics[0].DynamicCast<emp::Systematics<Cell, int>>()->GetNumActive(); } );
     stats_area << "<br>Shannon diversity: " << emp::web::Live( [this](){ return systematics[0].DynamicCast<emp::Systematics<Cell, int>>()->CalcDiversity(); } );
     stats_area << "<br>Sackin Index: " << emp::web::Live( [this](){ return systematics[0].DynamicCast<emp::Systematics<Cell, int>>()->SackinIndex(); } );

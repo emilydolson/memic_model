@@ -3,6 +3,7 @@
 
 #include "ResourceGradient.h"
 #include "config/ArgManager.h"
+#include "tools/File.h"
 #include "Evolve/World.h"
 
 // Default values for plate dimensions are extracted from MEMIC plate stl 
@@ -383,6 +384,7 @@ class HCAWorld : public emp::World<Cell> {
       for (int u = 0; u <= TIME_STEPS; u++) {
           RunStep();
       }
+      PrintOxygenGrid("oxygen.csv");
       systematics[0].DynamicCast<emp::Systematics<Cell, int>>()->Snapshot("memic_phylo.csv");  
   }
 
@@ -399,7 +401,7 @@ class HCAWorld : public emp::World<Cell> {
       double c = oxygen->GetVal(x, y, 0);
 
       double alpha = OER_ALPHA_MAX/((((OER_ALPHA_MAX - OER_MIN)*K_OER)/(c + K_OER)) + OER_MIN);
-      double beta = OER_BETA_MAX/(((((OER_BETA_MAX - OER_MIN)*K_OER)/(c + K_OER)) + OER_MIN)**2);
+      double beta = OER_BETA_MAX/(emp::Pow2((((OER_BETA_MAX - OER_MIN)*K_OER)/(c + K_OER)) + OER_MIN));
 
       if (random_ptr->P(exp(-n*(alpha*d + beta*emp::Pow(d,2))))) {
         // TODO: Figure out best way to kill cells
@@ -409,6 +411,26 @@ class HCAWorld : public emp::World<Cell> {
     }
   }
 
+  void PrintOxygenGrid(const std::string & filename) const {
+    std::cout << "print o2" <<std::endl;
+    std::ofstream oxygen_file(filename);
+
+    for (size_t cell_id = 0; cell_id < WORLD_X * WORLD_Y; cell_id++) {
+      size_t x = cell_id % WORLD_X;
+      size_t y = cell_id / WORLD_X;
+      if (x % WORLD_X > 0 ) {
+        oxygen_file << ", "; // Don't add comma at beginning of line
+      }
+
+      oxygen_file << emp::to_string(oxygen->GetVal(x, y, 0));
+
+      if (x % WORLD_X == WORLD_X - 1 ) {
+        oxygen_file << "\n"; // We're at the end of a row
+      }
+    }
+
+    oxygen_file.close();
+  }
 };
 
 #endif
