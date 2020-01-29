@@ -338,7 +338,7 @@ class HCAWorld : public emp::World<Cell> {
     std::cout << update << std::endl;
 
     if ((int)update == DOSE_TIME) {
-      ApplyRadiation(DOSES, DOSE_TIME);
+      ApplyRadiation(DOSES, DOSE_SIZE);
     }
 
     for (size_t cell_id = 0; cell_id < WORLD_X * WORLD_Y; cell_id++) {
@@ -430,11 +430,13 @@ class HCAWorld : public emp::World<Cell> {
       double alpha = OER_ALPHA_MAX/((((OER_ALPHA_MAX - OER_MIN)*K_OER)/(c + K_OER)) + OER_MIN);
       double beta = OER_BETA_MAX/emp::Pow(((((OER_BETA_MAX - OER_MIN)*K_OER)/(c + K_OER)) + OER_MIN), 2);
 
-      std::cout << "Probability: " << exp(-n*(alpha*d + beta*emp::Pow(d,2))) << std::endl;
+      std::cout << oxygen->GetVal(x, y, 0) << " Probability: " << exp(-n*(alpha*d + beta*emp::Pow(d,2))) << std::endl;
 
       if (!random_ptr->P(exp(-n*(alpha*d + beta*emp::Pow(d,2))))) {
         // TODO: Figure out best way to kill cells
         pop[cell_id]->marked_for_death = true;
+      } else {
+        std::cout << "Not marking for death" <<std::endl;
       }
 
     }
