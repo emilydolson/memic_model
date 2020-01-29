@@ -69,8 +69,14 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
                                         }
                                         return emp::ColorHSL(distinctiveness_hue,50,50);
                                      };
+                                     
   color_fun_t hif1alpha_color_fun = [this](int cell_id) {
                                         double hue = pop[cell_id]->hif1alpha * 280.0;
+                                        return emp::ColorHSL(hue,50,50);
+                                     };
+
+  color_fun_t death_color_fun = [this](int cell_id) {
+                                        double hue = pop[cell_id]->marked_for_death * 280.0;
                                         return emp::ColorHSL(hue,50,50);
                                      };
 
@@ -172,6 +178,13 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
                                      RedrawCells();
                                  }, 5);
 
+    cell_color_control.SetOption("Marked for death", 
+                                 [this](){
+                                     cell_color_fun = death_color_fun;
+                                     should_draw_cell_fun = draw_if_occupied;
+                                     RedrawCells();
+                                 }, 6);
+
 
     toggle = GetToggleButton("but_toggle");
     button_style.AddClass("btn");
@@ -181,8 +194,11 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
     UI::Button reset_button([this](){Reset(config, true); ResizeDisplays(); RedrawCells(); RedrawOxygen();}, "Reset");
     reset_button.SetCSS(button_style);
 
+    UI::Button radiation_button([this](){ApplyRadiation(DOSES, DOSE_SIZE);}, "Radiation");
+    radiation_button.SetCSS(button_style);
+    
     controls << toggle;
-    controls << " " << reset_button << " " << cell_color_control << "<br>";
+    controls << " " << reset_button << " " << cell_color_control  << " " << radiation_button << "<br>";
 
     oxygen_display.On("click", [this](int x, int y){OxygenClick(x, y);});;
     RedrawOxygen();
@@ -196,6 +212,7 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
     config_ui.SetOnChangeFun([this](const std::string & val){ std::cout << "New val: " << val<<std::endl;;InitConfigs(config);});
     config_ui.ExcludeConfig("SEED");
     config_ui.ExcludeConfig("TIME_STEPS");
+    config_ui.ExcludeConfig("DOSE_TIME");
     config_ui.ExcludeConfig("BASAL_OXYGEN_CONSUMPTION_HEALTHY");
     config_ui.ExcludeConfig("OXYGEN_CONSUMPTION_DIVISION_HEALTHY");
     config_ui.ExcludeConfig("BASAL_OXYGEN_CONSUMPTION_HEALTHY");
