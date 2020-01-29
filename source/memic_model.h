@@ -4,6 +4,7 @@
 #include "ResourceGradient.h"
 #include "config/ArgManager.h"
 #include "Evolve/World.h"
+#include "tools/spatial_stats.h"
 
 // Default values for plate dimensions are extracted from MEMIC plate stl 
 
@@ -35,6 +36,9 @@ EMP_BUILD_CONFIG( MemicConfig,
   VALUE(KM, double, 0.01, "Michaelis-Menten kinetic parameter"),
 
   GROUP(TREATMENT, "Treatment settings"),
+  VALUE(DOSES, int, 0, "Number of radiation doses to apply"),
+  VALUE(DOSE_SIZE, double, 2, "Dose size (Gy)"),
+  VALUE(DOSE_TIME, int, -1, "When to apply radiation"),
   VALUE(K_OER, double, 3.28, "Effective OER constant"),  
   VALUE(OER_MIN, double, 1, "OER min constant"),  
   VALUE(OER_ALPHA_MAX, double, 1.75, "OER alpha max constant"),  
@@ -83,6 +87,9 @@ class HCAWorld : public emp::World<Cell> {
   double PLATE_DEPTH;
   double CELL_DIAMETER;
 
+  int DOSES;
+  double DOSE_SIZE;
+  int DOSE_TIME;
   double K_OER;
   double OER_MIN;
   double OER_ALPHA_MAX;
@@ -96,6 +103,9 @@ class HCAWorld : public emp::World<Cell> {
 
   emp::vector<emp::vector<double>> densities;
   emp::vector<emp::vector<double>> diversities;
+
+  std::function<double()> colless_fun = [this](){return GetSystematics()->CollessLikeIndex();};
+  std::function<double()> sackin_fun = [this](){return GetSystematics()->SackinIndex();};
 
   public:
   emp::Ptr<ResourceGradient> oxygen;
@@ -129,6 +139,9 @@ class HCAWorld : public emp::World<Cell> {
     PLATE_DEPTH = config.PLATE_DEPTH();
     CELL_DIAMETER = config.CELL_DIAMETER();
 
+    DOSES = config.DOSES();
+    DOSE_SIZE = config.DOSE_SIZE();
+    DOSE_TIME = config.DOSE_TIME();
     K_OER = config.K_OER();
     OER_MIN = config.OER_MIN();
     OER_ALPHA_MAX = config.OER_ALPHA_MAX();
@@ -239,6 +252,10 @@ class HCAWorld : public emp::World<Cell> {
     phylodiversity_file.AddStats(*sys->GetDataNode("evolutionary_distinctiveness") , "evolutionary_distinctiveness", "evolutionary distinctiveness for a single update", true, true);
     phylodiversity_file.AddStats(*sys->GetDataNode("pairwise_distance"), "pairwise_distance", "pairwise distance for a single update", true, true);
     phylodiversity_file.AddCurrent(*sys->GetDataNode("phylogenetic_diversity"), "current_phylogenetic_diversity", "current phylogenetic diversity", true, true);
+
+    phylodiversity_file.AddFun(colless_fun, "colless_index", "current colless index");  
+    phylodiversity_file.AddFun(sackin_fun, "sackin_index", "current sackin index");  
+
     phylodiversity_file.PrintHeaderKeys();
     phylodiversity_file.SetTimingRepeat(config.DATA_RESOLUTION());
 
@@ -320,6 +337,10 @@ class HCAWorld : public emp::World<Cell> {
   void RunStep() {
     std::cout << update << std::endl;
 
+    if ((int)update == DOSE_TIME) {
+      ApplyRadiation(DOSES, DOSE_TIME);
+    }
+
     for (size_t cell_id = 0; cell_id < WORLD_X * WORLD_Y; cell_id++) {
       if (!IsOccupied(cell_id)) {
         // Don't need to do anything for dead/empty cells
@@ -354,6 +375,11 @@ class HCAWorld : public emp::World<Cell> {
 
       // If space, divide
       if (potential_offspring_cell != -1 && random_ptr->P(MITOSIS_PROB)) {
+        // Check if cell needs to die
+        if (pop[cell_id]->marked_for_death) {
+          continue;
+        }
+        
         // Cell divides
         oxygen->DecNextVal(x, y, 0, OXYGEN_CONSUMPTION_DIVISION);
 
@@ -384,6 +410,9 @@ class HCAWorld : public emp::World<Cell> {
           RunStep();
       }
       systematics[0].DynamicCast<emp::Systematics<Cell, int>>()->Snapshot("memic_phylo.csv");  
+      densities = emp::GridDensity(*this);
+      std::cout << emp::to_string(densities) << std::endl;
+
   }
 
   /* n is the number of doses of radiation, d dose size in Gy*/
@@ -399,9 +428,11 @@ class HCAWorld : public emp::World<Cell> {
       double c = oxygen->GetVal(x, y, 0);
 
       double alpha = OER_ALPHA_MAX/((((OER_ALPHA_MAX - OER_MIN)*K_OER)/(c + K_OER)) + OER_MIN);
-      double beta = OER_BETA_MAX/(((((OER_BETA_MAX - OER_MIN)*K_OER)/(c + K_OER)) + OER_MIN)**2);
+      double beta = OER_BETA_MAX/emp::Pow(((((OER_BETA_MAX - OER_MIN)*K_OER)/(c + K_OER)) + OER_MIN), 2);
 
-      if (random_ptr->P(exp(-n*(alpha*d + beta*emp::Pow(d,2))))) {
+      std::cout << "Probability: " << exp(-n*(alpha*d + beta*emp::Pow(d,2))) << std::endl;
+
+      if (!random_ptr->P(exp(-n*(alpha*d + beta*emp::Pow(d,2))))) {
         // TODO: Figure out best way to kill cells
         pop[cell_id]->marked_for_death = true;
       }
