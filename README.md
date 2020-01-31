@@ -1,7 +1,9 @@
 # MEMIC model
 Model of cancer growth under spatially heterogeneous oxygen
 
-[![Build Status](https://travis-ci.com/emilydolson/memic_model.svg?branch=master)](https://travis-ci.com/emilydolson/memic_model) [![codecov](https://codecov.io/gh/emilydolson/memic_model/branch/master/graph/badge.svg)](https://codecov.io/gh/emilydolson/memic_model) [![CodeFactor](https://www.codefactor.io/repository/github/emilydolson/memic_model/badge)](https://www.codefactor.io/repository/github/emilydolson/memic_model)
+[![Build Status](https://travis-ci.com/emilydolson/memic_model.svg?branch=master)](https://travis-ci.com/emilydolson/memic_model) [![codecov](https://codecov.io/gh/emilydolson/memic_model/branch/master/graph/badge.svg)](https://codecov.io/gh/emilydolson/memic_model) [![CodeFactor](https://www.codefactor.io/repository/github/emilydolson/memic_model/badge)](https://www.codefactor.io/repository/github/emilydolson/memic_model)[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3633395.svg)](https://doi.org/10.5281/zenodo.3633395)
+
+
 
 ## Dependencies
 
