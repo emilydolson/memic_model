@@ -1,7 +1,7 @@
 # MEMIC model
 Model of cancer growth along an oxygen gradient created by a [MEMIC plate](http://carmofon.org/3d-designs/memic/). An interactive web-based version of this model is available [here](https://emilydolson.github.io/memic_model/web/memic_model.html).
 
-[![Build Status](https://travis-ci.com/emilydolson/memic_model.svg?branch=master)](https://travis-ci.com/emilydolson/memic_model) [![codecov](https://codecov.io/gh/emilydolson/memic_model/branch/master/graph/badge.svg)](https://codecov.io/gh/emilydolson/memic_model) [![CodeFactor](https://www.codefactor.io/repository/github/emilydolson/memic_model/badge)] (https://www.codefactor.io/repository/github/emilydolson/memic_model) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3633395.svg)](https://doi.org/10.5281/zenodo.3633394)
+[![Build Status](https://travis-ci.com/emilydolson/memic_model.svg?branch=master)](https://travis-ci.com/emilydolson/memic_model) [![codecov](https://codecov.io/gh/emilydolson/memic_model/branch/master/graph/badge.svg)](https://codecov.io/gh/emilydolson/memic_model) [![CodeFactor](https://www.codefactor.io/repository/github/emilydolson/memic_model/badge)](https://www.codefactor.io/repository/github/emilydolson/memic_model) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3633395.svg)](https://doi.org/10.5281/zenodo.3633394)
 
 <img src="https://raw.githubusercontent.com/emilydolson/memic_model/master/normal_memic_canvas.png" width="300">
 
