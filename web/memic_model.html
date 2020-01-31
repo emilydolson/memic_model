@@ -36,8 +36,8 @@
     <!-- Page dsecription -->
     <p>
         <br>
-        This is a work in progress, but eventually it will be a model of cancer cells evolving along a
-        spatial oxygen gradient. This model will be a companion to a set of laboratory experiments using 
+        A model of cancer cells evolving along a
+        spatial oxygen gradient. This model is a companion to a set of laboratory experiments using 
         <a href="https://www.pnas.org/content/114/11/2934">MEMIC plates</a>. 
     </p>
 
@@ -96,7 +96,16 @@
                 You can click anywhere on the map to add oxygen there.
 
                 The right box shows the phylogenetic depth (distance from original ancestor) of each cell in the world. Higher hue values are farther down
-                the tree (i.e. more generations have elapsed). Black cells are unoccupied.
+                the tree (i.e. more generations have elapsed). Black cells are unoccupied. To color based on a different piece of
+                    data, click the dropdown menu next to the "start" and "reset" buttons and select a new color rule.
+                    
+                You can adjust the sliders to change parameters. For parameters that change the starting conditions (e.g. initial
+                    population size), click the "reset" button after adjusting the parameter before clicking "start."
+                    
+                To apply radiation, click the "Radiation" button. This will simulate applying the number of doses specified by
+                    the "Doses" parameter (note that the default is 0, which will apply no radiation) of the size specified by
+                    the "Dose size" parameter. Applying radiation will mark cells for death, causing them to die when they next
+                    try to divide (choose to color be "Marked for death" to see which cells have been marked for death).
                 </p>
 
 
