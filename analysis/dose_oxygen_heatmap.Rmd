@@ -33,7 +33,7 @@ surviving_fraction <- function(c, d, n) {
 ```
 
 # Results
-
+  
 
 ```{r}
 # Generate a dataframe containing surviving fraction across range of doses and oxygen levels
@@ -56,6 +56,7 @@ colnames(df) <- c("dose", "oxygen", "sf")
 breaks <- c(.0000000000000000000000000000000000000000000000000000000000000000000001,.000000000000000000000000000000000000000000000000000000000001,.00000000000000000000000000000000000000000000000001,.0000000000000000000000000000000000000001,.000000000000000000000000000001,.00000000000000000001, .0000000001, .1)
 logticks <- log(ticks)
 
-ggplot(data=df) + geom_raster(aes(x=dose, y=oxygen, fill=sf)) + scale_fill_continuous(type="viridis", trans="log10", breaks = breaks)
+ggplot(data=df) + geom_raster(aes(x=dose, y=oxygen, fill=sf)) + scale_fill_continuous(type="viridis", trans="log10", breaks = breaks) +
+  scale_x_continuous("Dose (Gy)") + scale_y_continuous("Oxygen")
 
 ```

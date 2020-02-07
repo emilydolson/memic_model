@@ -90,6 +90,11 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
                                         return emp::ColorHSL(hue,50,50);
                                      };
 
+  color_fun_t sf_color_fun = [this](int cell_id) {
+                                        double c = oxygen->GetVal(cell_id % WORLD_X, cell_id / WORLD_X, 0);
+                                        double hue = emp::Pow(SurvivingFraction(DOSES, DOSE_SIZE, c), .25) * 280.0;
+                                        return emp::ColorHSL(hue,50,50);
+                                     };
 
   should_draw_fun_t should_draw_cell_fun;
   should_draw_fun_t draw_if_occupied = [this](int cell_id){return IsOccupied(cell_id);};
@@ -120,6 +125,7 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
   void SetupInterface() {
     GetRandom().ResetSeed(config.SEED());
     config.CELL_DIAMETER(200);
+    config.DIFFUSION_STEPS_PER_TIME_STEP(10);
     Setup(config, true);
 
     ResizeDisplays();
@@ -185,6 +191,12 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
                                      RedrawCells();
                                  }, 6);
 
+    cell_color_control.SetOption("Radiation death probability", 
+                                 [this](){
+                                     cell_color_fun = sf_color_fun;
+                                     should_draw_cell_fun = draw_if_occupied;
+                                     RedrawCells();
+                                 }, 7);
 
     toggle = GetToggleButton("but_toggle");
     button_style.AddClass("btn");

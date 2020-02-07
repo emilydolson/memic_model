@@ -32,7 +32,7 @@ EMP_BUILD_CONFIG( MemicConfig,
   GROUP(OXYGEN, "Oxygen settings"),
   VALUE(INITIAL_OXYGEN_LEVEL, double, .5, "Initial oxygen level (will be placed in all cells)"),
   VALUE(OXYGEN_DIFFUSION_COEFFICIENT, double, .1, "Oxygen diffusion coefficient"),
-  VALUE(DIFFUSION_STEPS_PER_TIME_STEP, int, 10, "Rate at which diffusion is calculated relative to rest of model"),
+  VALUE(DIFFUSION_STEPS_PER_TIME_STEP, int, 100, "Rate at which diffusion is calculated relative to rest of model"),
   VALUE(OXYGEN_THRESHOLD, double, .1, "How much oxygen do cells need to survive?"),
   VALUE(KM, double, 0.01, "Michaelis-Menten kinetic parameter"),
 
@@ -418,6 +418,13 @@ class HCAWorld : public emp::World<Cell> {
   }
 
   /* n is the number of doses of radiation, d dose size in Gy*/
+  double SurvivingFraction(double n, double d, double c) {
+    double alpha = OER_ALPHA_MAX/((((OER_ALPHA_MAX - OER_MIN)*K_OER)/(c + K_OER)) + OER_MIN);
+    double beta = OER_BETA_MAX/emp::Pow(((((OER_BETA_MAX - OER_MIN)*K_OER)/(c + K_OER)) + OER_MIN), 2);
+    return exp(-n*(alpha*d + beta*emp::Pow(d,2)));
+  }
+
+  /* n is the number of doses of radiation, d dose size in Gy*/
   void ApplyRadiation(double n, double d) {
     for (size_t cell_id = 0; cell_id < WORLD_X * WORLD_Y; cell_id++) {
       if (!IsOccupied(cell_id)) {
@@ -429,17 +436,11 @@ class HCAWorld : public emp::World<Cell> {
       size_t y = cell_id / WORLD_X;
       double c = oxygen->GetVal(x, y, 0);
 
-      double alpha = OER_ALPHA_MAX/((((OER_ALPHA_MAX - OER_MIN)*K_OER)/(c + K_OER)) + OER_MIN);
-      double beta = OER_BETA_MAX/emp::Pow(((((OER_BETA_MAX - OER_MIN)*K_OER)/(c + K_OER)) + OER_MIN), 2);
 
-      std::cout << oxygen->GetVal(x, y, 0) << " Probability: " << exp(-n*(alpha*d + beta*emp::Pow(d,2))) << std::endl;
-
-      if (!random_ptr->P(exp(-n*(alpha*d + beta*emp::Pow(d,2))))) {
+      if (!random_ptr->P(SurvivingFraction(n,d,c))) {
         // TODO: Figure out best way to kill cells
         pop[cell_id]->marked_for_death = true;
-      } else {
-        std::cout << "Not marking for death" <<std::endl;
-      }
+      } 
 
     }
   }
