@@ -92,7 +92,7 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
 
   color_fun_t sf_color_fun = [this](int cell_id) {
                                         double c = oxygen->GetVal(cell_id % WORLD_X, cell_id / WORLD_X, 0);
-                                        double hue = emp::Pow(SurvivingFraction(DOSES, DOSE_SIZE, c), .25) * 280.0;
+                                        double hue = emp::Pow(SurvivingFraction(RADIATION_DOSES, RADIATION_DOSE_SIZE, c), .25) * 280.0;
                                         return emp::ColorHSL(hue,50,50);
                                      };
 
@@ -224,7 +224,6 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
     config_ui.SetOnChangeFun([this](const std::string & val){ std::cout << "New val: " << val<<std::endl;;InitConfigs(config);});
     config_ui.ExcludeConfig("SEED");
     config_ui.ExcludeConfig("TIME_STEPS");
-    config_ui.ExcludeConfig("DOSE_TIME");
     config_ui.ExcludeConfig("BASAL_OXYGEN_CONSUMPTION_HEALTHY");
     config_ui.ExcludeConfig("OXYGEN_CONSUMPTION_DIVISION_HEALTHY");
     config_ui.ExcludeConfig("BASAL_OXYGEN_CONSUMPTION_HEALTHY");
