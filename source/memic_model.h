@@ -37,9 +37,9 @@ EMP_BUILD_CONFIG( MemicConfig,
   VALUE(KM, double, 0.01, "Michaelis-Menten kinetic parameter"),
 
   GROUP(TREATMENT, "Treatment settings"),
-  VALUE(DOSES, int, 0, "Number of radiation doses to apply"),
-  VALUE(DOSE_SIZE, double, 2, "Dose size (Gy)"),
-  VALUE(DOSE_TIME, int, -1, "When to apply radiation"),
+  VALUE(RADIATION_DOSES, int, 1, "Number of radiation doses to apply (for use in web interface - use a radiation prescription file for command-line)"),
+  VALUE(RADIATION_DOSE_SIZE, double, 2, "Dose size (Gy) (for use in web interface - use a radiation prescription file for command-line)"),
+  VALUE(RADIATION_PRESCRIPTION_FILE, std::string, "none", "File containing radiation prescription"),
   VALUE(K_OER, double, 3.28, "Effective OER constant"),  
   VALUE(OER_MIN, double, 1, "OER min constant"),  
   VALUE(OER_ALPHA_MAX, double, 1.75, "OER alpha max constant"),  
@@ -88,9 +88,8 @@ class HCAWorld : public emp::World<Cell> {
   double PLATE_DEPTH;
   double CELL_DIAMETER;
 
-  int DOSES;
-  double DOSE_SIZE;
-  int DOSE_TIME;
+  int RADIATION_DOSES;
+  double RADIATION_DOSE_SIZE;
   double K_OER;
   double OER_MIN;
   double OER_ALPHA_MAX;
@@ -104,6 +103,10 @@ class HCAWorld : public emp::World<Cell> {
 
   emp::vector<emp::vector<double>> densities;
   emp::vector<emp::vector<double>> diversities;
+
+  emp::vector<emp::vector<double>> radiation_prescription_data;
+  int next_radiation_time = -1;
+  int next_radiation_index = 0;
 
   std::function<double()> colless_fun = [this](){return GetSystematics()->CollessLikeIndex();};
   std::function<double()> sackin_fun = [this](){return GetSystematics()->SackinIndex();};
@@ -140,9 +143,8 @@ class HCAWorld : public emp::World<Cell> {
     PLATE_DEPTH = config.PLATE_DEPTH();
     CELL_DIAMETER = config.CELL_DIAMETER();
 
-    DOSES = config.DOSES();
-    DOSE_SIZE = config.DOSE_SIZE();
-    DOSE_TIME = config.DOSE_TIME();
+    RADIATION_DOSES = config.RADIATION_DOSES();
+    RADIATION_DOSE_SIZE = config.RADIATION_DOSE_SIZE();
     K_OER = config.K_OER();
     OER_MIN = config.OER_MIN();
     OER_ALPHA_MAX = config.OER_ALPHA_MAX();
@@ -154,6 +156,10 @@ class HCAWorld : public emp::World<Cell> {
 
     if (oxygen) {
       oxygen->SetDiffusionCoefficient(OXYGEN_DIFFUSION_COEFFICIENT);
+    }
+
+    if (config.RADIATION_PRESCRIPTION_FILE() != "none") {
+      radiation_prescription_data = emp::File(config.RADIATION_PRESCRIPTION_FILE()).KeepIf([](const std::string & s){return !emp::has_letter(s);}).ToData<double>();
     }
   }
 
@@ -267,6 +273,11 @@ class HCAWorld : public emp::World<Cell> {
     InitPop();
 
     SetSynchronousSystematics(true);
+
+    if (radiation_prescription_data.size() > 0) {
+      next_radiation_time = radiation_prescription_data[0][0];
+      next_radiation_index = 0;
+    }
   }
 
   void BasalOxygenConsumption() {
@@ -338,8 +349,18 @@ class HCAWorld : public emp::World<Cell> {
   void RunStep() {
     std::cout << update << std::endl;
 
-    if ((int)update == DOSE_TIME) {
-      ApplyRadiation(DOSES, DOSE_SIZE);
+    if ((int)update == next_radiation_time) {
+      // Do radiation
+      // Prescription file columns are time, dose_size, dose_number
+      ApplyRadiation(radiation_prescription_data[next_radiation_index][2], radiation_prescription_data[next_radiation_index][1]);
+
+      // Figure out when to do radiation next
+      next_radiation_index++;
+      if (next_radiation_index < (int)radiation_prescription_data.size()) {
+        next_radiation_time = radiation_prescription_data[next_radiation_index][0];
+      } else {
+        next_radiation_time = -1;
+      }
     }
 
     for (size_t cell_id = 0; cell_id < WORLD_X * WORLD_Y; cell_id++) {
