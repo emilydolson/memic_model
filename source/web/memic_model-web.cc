@@ -206,7 +206,7 @@ class HCAWebInterface : public UI::Animate, public HCAWorld{
     UI::Button reset_button([this](){Reset(config, true); ResizeDisplays(); RedrawCells(); RedrawOxygen();}, "Reset");
     reset_button.SetCSS(button_style);
 
-    UI::Button radiation_button([this](){ApplyRadiation(DOSES, DOSE_SIZE);}, "Radiation");
+    UI::Button radiation_button([this](){ApplyRadiation(RADIATION_DOSES, RADIATION_DOSE_SIZE);}, "Radiation");
     radiation_button.SetCSS(button_style);
     
     controls << toggle;
