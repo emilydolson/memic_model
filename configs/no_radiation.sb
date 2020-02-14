@@ -1,0 +1,17 @@
+#!/bin/sh                                                                                                                                                      
+
+#SBATCH --mail-type=ALL                                                                                                                                        
+#SBATCH --mail-user=dolsone@ccf.org                                                                                                                            
+#SBATCH --job-name=memic_model                                                                                                                                 
+#SBATCH -o acc_equil_%A_%a.out                                                                                                                                 
+#SBATCH --mem 1G                                                                                                                                               
+#SBATCH -n 1                                                                                                                                                   
+#SBATCH --cpus-per-task=1                                                                                                                                      
+#SBATCH --array=20-24                                                                                                                                          
+
+module load mpc/0.8.1
+cd lustre/memic_model/data
+mkdir no_radiation_90${SLURM_ARRAY_TASK_ID}
+cd no_radiation_90${SLURM_ARRAY_TASK_ID}
+cp ../../memic_model .
+./memic_model -MITOSIS_PROB .01 -DIFFUSION_STEPS_PER_TIME_STEP 1000 -TIME_STEPS 1500 -SEED 90${SLURM_ARRAY_TASK_ID}
