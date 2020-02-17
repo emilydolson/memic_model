@@ -265,8 +265,7 @@ class HCAWorld : public emp::World<Cell> {
 
     phylodiversity_file.PrintHeaderKeys();
     phylodiversity_file.SetTimingRepeat(config.DATA_RESOLUTION());
-
-    // emp::DataFile & phylodiversity_file = SetupFile("phylodiversity.csv");
+    // emp::AddLineageMutationFile(*this, "lineage_mutations.csv", MUTATION_TYPES).SetTimingRepeat(config.DATA_RESOLUTION());
 
     SetPopStruct_Grid(WORLD_X, WORLD_Y, true);
     InitOxygen();
@@ -467,7 +466,7 @@ class HCAWorld : public emp::World<Cell> {
   }
 
   void PrintOxygenGrid(const std::string & filename) const {
-    std::cout << "print o2" <<std::endl;
+
     std::ofstream oxygen_file(filename);
 
     for (size_t cell_id = 0; cell_id < WORLD_X * WORLD_Y; cell_id++) {
